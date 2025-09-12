@@ -16,10 +16,17 @@
 - Backend Framework
     - Express.js
 - Database
-    - MySQL
+    - MySQL?
 - Additional Packages/Libraries
     - React Router
     - Bootstrap
+    - Material UI
+        - Fontsource roboto
+        - MUI Icons-material
+- Miscellaneous
+    - Globals
+        - Responsive meta tag
+        - CssBaseline
 
 ## Steps for getting started on your machine
 
