@@ -4,9 +4,15 @@ import viteLogo from "/vite.svg";
 import "./App.css";
 // MUI
 import Button from "@mui/material/Button";
+import Drawer from "@mui/material/Drawer";
 
 function Home() {
   const [count, setCount] = useState(0);
+
+  const [open, setOpen] = useState(false);
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setOpen(newOpen);
+  };
 
   return (
     <>
@@ -35,6 +41,10 @@ function Home() {
           to add MUI to the project
         </p>
       </div>
+      <Button onClick={toggleDrawer(true)}>Open drawer</Button>
+      <Drawer open={open} onClose={toggleDrawer(false)}>
+        {DrawerList}
+      </Drawer>
     </>
   );
 }
