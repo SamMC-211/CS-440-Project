@@ -27,6 +27,8 @@ app.use(
             secure: false, // set true in production (HTTPS)
             sameSite: 'lax', //protects against CSRF?
             maxAge: 1000 * 60 * 60 * 24, // 1 day (when cookie/session expires)
+            // maxAge: null, //session cookie, until they close the BROWSER
+            // maxAge: 0, //User will need to log in after any action that triggers RequireAuth
         },
     })
 );
@@ -34,15 +36,18 @@ app.use(
 // API: login (POST request)
 //Once the server recieves a POST with param '/api/login' the handler function(req, res) => is called
 app.post('/api/login', (req, res) => {
-    const { username, password } = req.body || {}; //parse POST body into username and password
-    if (!username || !password) return res.status(400).json({ ok: false, message: 'Missing' }); // If username or password not recieved, respond accordingly
+    // Simulate load time
+    setTimeout(() => {
+        const { username, password } = req.body || {}; //parse POST body into username and password
+        if (!username || !password) return res.status(400).json({ ok: false, message: 'Missing' }); // If username or password not recieved, respond accordingly
 
-    const user = USERS.find((u) => u.username === username && u.password === password); // returns first element in USERS array where POSTed username/password match
-    if (!user) return res.status(401).json({ ok: false, message: 'Invalid credentials' }); //If no user is returned, respond accordingly
+        const user = USERS.find((u) => u.username === username && u.password === password); // returns first element in USERS array where POSTed username/password match
+        if (!user) return res.status(401).json({ ok: false, message: 'Invalid credentials' }); //If no user is returned, respond accordingly
 
-    // Save minimal info to session
-    req.session.user = { username: user.username, displayName: user.displayName };
-    return res.json({ ok: true, user: req.session.user }); //Return ok and session user
+        // Save minimal info to session
+        req.session.user = { username: user.username, displayName: user.displayName };
+        return res.json({ ok: true, user: req.session.user }); //Return ok and session user
+    }, 2000);
 });
 
 // API: check current user (lets frontend check "am I logged in") (GET request from frontend)
@@ -52,7 +57,7 @@ app.get('/api/me', (req, res) => {
     setTimeout(() => {
         if (req.session && req.session.user) return res.json({ ok: true, user: req.session.user });
         return res.status(401).json({ ok: false, message: 'Not authenticated' });
-    }, 4000);
+    }, 2000);
 });
 
 // API: logout (destroys users session on server, clears cookies, afterward /api/me will return "Not Authenticated")

@@ -21,6 +21,8 @@ const theme = createTheme({
                     margin: 0,
                     padding: 0,
                     minHeight: '100vh',
+                    maxWidth: '1280px',
+                    textAlign: 'center',
                 },
             },
         },
@@ -32,6 +34,9 @@ const theme = createTheme({
         text: {
             // primary: '#a93331',
             // secondary: '#131618',
+        },
+        secondary: {
+            main: '#a93331',
         },
     },
 });

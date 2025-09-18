@@ -1,21 +1,23 @@
 // Backround image needs to be imported
 import gymImage from './assets/gym_image.jpg';
 // MUI
-import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert } from '@mui/material';
+import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop } from '@mui/material';
 
 // Login Page Imports
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 
 function Login() {
     // Backend login stuff
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
     async function submit(e: React.FormEvent) {
         e.preventDefault();
+        setLoading(true);
         setError(null);
 
         //Tries a post request
@@ -36,6 +38,8 @@ function Login() {
         } catch (err) {
             setError('Network error');
             console.log(err);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -49,7 +53,6 @@ function Login() {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    // backgroundColor: '#f0f2f5', // light gray background
                     // Backticks to insert JS into CSS
                     backgroundImage: `url(${gymImage})`,
                     backgroundSize: 'cover',
@@ -65,6 +68,8 @@ function Login() {
                     }}
                 />
                 <Typography
+                    component={Link}
+                    to='/'
                     variant='h1'
                     fontWeight='bold'
                     sx={{
@@ -76,6 +81,7 @@ function Login() {
                         textAlign: 'center',
                         zIndex: 3,
                         textShadow: '2px 2px 20px #494746',
+                        textDecoration: 'none',
                     }}
                 >
                     Schedule Fit
@@ -85,9 +91,9 @@ function Login() {
                     fontWeight='bold'
                     sx={{
                         position: 'absolute',
-                        top: '25.5%',
-                        left: '50.5%',
-                        transform: 'translateX(-50%) translateY(-50%)',
+                        top: '25%',
+                        left: '50.3%',
+                        transform: 'translateX(-50%) translateY(-45%)',
                         color: '#494746',
                         textAlign: 'center',
                         zIndex: 2,
@@ -124,6 +130,10 @@ function Login() {
                         </Typography>
                     </CardContent>
                 </Card>
+                {/* Loading overlay */}
+                <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
+                    <CircularProgress color='inherit' />
+                </Backdrop>
             </Box>
         </>
     );
