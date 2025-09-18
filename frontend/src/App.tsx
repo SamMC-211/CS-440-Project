@@ -1,9 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router';
 import Home from './Home';
 import Login from './Login';
+import UserHome from './UserHome';
 // MUI Rec.
 import { CssBaseline } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+// Login with Backend
+import RequireAuth from './components/RequireAuth';
 
 const theme = createTheme({
     components: {
@@ -42,6 +45,14 @@ function App() {
                     <Routes>
                         <Route path='/' element={<Home />}></Route>
                         <Route path='/Login' element={<Login />}></Route>
+                        <Route
+                            path='/Home'
+                            element={
+                                <RequireAuth>
+                                    <UserHome />
+                                </RequireAuth>
+                            }
+                        />
                     </Routes>
                 </Router>
             </ThemeProvider>

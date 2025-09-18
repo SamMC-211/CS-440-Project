@@ -1,8 +1,45 @@
+// Backround image needs to be imported
 import gymImage from './assets/gym_image.jpg';
 // MUI
-import { Card, CardContent, Typography, TextField, Button, Stack, Box } from '@mui/material';
+import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert } from '@mui/material';
+
+// Login Page Imports
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 function Login() {
+    // Backend login stuff
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    async function submit(e: React.FormEvent) {
+        e.preventDefault();
+        setError(null);
+
+        //Tries a post request
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // << important to include cookies
+                body: JSON.stringify({ username, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setError(data.message || 'Login failed');
+                return;
+            }
+            // success -> navigate to home
+            navigate('/home');
+        } catch (err) {
+            setError('Network error');
+            console.log(err);
+        }
+    }
+
+    //Actual page content
     return (
         <>
             <Box
@@ -24,7 +61,7 @@ function Login() {
                     sx={{
                         position: 'absolute',
                         inset: 0, // shorthand for top/right/bottom/left: 0
-                        background: 'linear-gradient(45deg,rgba(19, 22, 24, 1) 0%, rgba(19, 22, 24, 0.13) 100%)',
+                        background: 'linear-gradient(45deg,rgba(19, 22, 24, 1) 0%, rgba(19, 22, 24, 0.27) 100%)',
                     }}
                 />
                 <Typography
@@ -37,8 +74,23 @@ function Login() {
                         transform: 'translateX(-50%) translateY(-50%)',
                         color: '#a93331',
                         textAlign: 'center',
-                        zIndex: 2,
+                        zIndex: 3,
                         textShadow: '2px 2px 20px #494746',
+                    }}
+                >
+                    Schedule Fit
+                </Typography>
+                <Typography
+                    variant='h1'
+                    fontWeight='bold'
+                    sx={{
+                        position: 'absolute',
+                        top: '25.5%',
+                        left: '50.5%',
+                        transform: 'translateX(-50%) translateY(-50%)',
+                        color: '#494746',
+                        textAlign: 'center',
+                        zIndex: 2,
                     }}
                 >
                     Schedule Fit
@@ -49,15 +101,24 @@ function Login() {
                             Login
                         </Typography>
 
-                        <Stack spacing={2}>
-                            <TextField label='Email' type='email' variant='outlined' fullWidth />
-                            <TextField label='Password' type='password' variant='outlined' fullWidth />
+                        {/* Login stuff??? */}
+                        {error && (
+                            <Alert severity='error' sx={{ mb: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
 
-                            <Button variant='contained' color='primary' fullWidth>
-                                Sign In
-                            </Button>
-                        </Stack>
+                        {/* Wrap in a form element */}
+                        <form onSubmit={submit}>
+                            <Stack spacing={2}>
+                                <TextField label='Username' value={username} onChange={(e) => setUsername(e.target.value)} variant='outlined' fullWidth />
+                                <TextField label='Password' type='password' onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
 
+                                <Button type='submit' variant='contained' color='primary' fullWidth>
+                                    Sign In
+                                </Button>
+                            </Stack>
+                        </form>
                         <Typography variant='body2' color='text.secondary' textAlign='center' mt={2}>
                             Don't have an account? <a href='#'>Sign Up</a>
                         </Typography>

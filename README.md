@@ -27,6 +27,7 @@
     - Globals
         - Responsive meta tag
         - CssBaseline
+    - Express-session
 
 ## Steps for getting started on your machine
 
