@@ -51,3 +51,7 @@
 
 4. Following the instructions at the end of the Vite install run "npm install" and "npm run dev" (From within the project directory)
 5. Similarly to creating the frontend you're going to navigate into the "backend" directory and run "npm install express" to install Express.js 
+
+## MUI Learning
+- Figure out  \<Typography variant='h5' component='div' textAlign='center' gutterBottom>
+- Figure out color='primary'

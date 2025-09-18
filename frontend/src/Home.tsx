@@ -1,42 +1,36 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import './Home.css';
 // MUI
-import Button from "@mui/material/Button";
+import { Container } from '@mui/material';
+import { Grid } from '@mui/material';
+import { Box } from '@mui/material';
+import { Button } from '@mui/material';
+import { Link } from 'react-router';
 
 function Home() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>MUI Testing</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <Button
-          onClick={() => setCount((count) => count + 1)}
-          variant="contained"
-        >
-          This count is also {count}
-        </Button>
-        <p>
-          Ran{" "}
-          <code>npm install @mui/material @emotion/react @emotion/styled</code>{" "}
-          to add MUI to the project
-        </p>
-      </div>
-    </>
-  );
+    return (
+        <>
+            <Container maxWidth='lg'>
+                <Grid container spacing={6}>
+                    <Grid size={4}>
+                        <Box sx={{ p: 2, border: '1px dashed grey' }}>Profile information?</Box>
+                    </Grid>
+                    <Grid size={8}>
+                        <Box sx={{ p: 2, border: '1px dashed grey' }}>List of appointments?</Box>
+                    </Grid>
+                    <Grid size={6}>
+                        <Box sx={{ p: 2, border: '1px dashed grey' }}>Options for reports</Box>
+                    </Grid>
+                    <Grid size={6}>
+                        <Box sx={{ p: 2, border: '1px dashed grey' }}>
+                            <Button component={Link} to='/Login' variant='contained'>
+                                Login Page
+                            </Button>
+                        </Box>
+                    </Grid>
+                </Grid>
+            </Container>
+        </>
+    );
 }
 
 export default Home;
