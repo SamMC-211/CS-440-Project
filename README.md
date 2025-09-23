@@ -56,3 +56,7 @@
 ## MUI Learning
 - Figure out  \<Typography variant='h5' component='div' textAlign='center' gutterBottom>
 - Figure out color='primary'
+
+## Misc. To-Do
+- Change Site icon
+- At what level do I create a wrapper loading component that will render a loading overlay when attempting to route to different Pages, at the App.tsx level orrrr
