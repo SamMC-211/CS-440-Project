@@ -1,5 +1,6 @@
 // Backround image needs to be imported
 import gymImage from './assets/gym_image.jpg';
+import CustomHeader from './components/CustomHeader';
 // MUI
 import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop } from '@mui/material';
 
@@ -7,10 +8,14 @@ import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, Ci
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 
-function Login() {
+function Register() {
     // Backend login stuff
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -53,6 +58,7 @@ function Login() {
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
+                    flexDirection: 'column',
                     // Backticks to insert JS into CSS
                     backgroundImage: `url(${gymImage})`,
                     backgroundSize: 'cover',
@@ -67,44 +73,11 @@ function Login() {
                         background: 'linear-gradient(45deg,rgba(19, 22, 24, 1) 0%, rgba(19, 22, 24, 0.27) 100%)',
                     }}
                 />
-                <Typography
-                    component={Link}
-                    to='/'
-                    variant='h1'
-                    fontWeight='bold'
-                    sx={{
-                        position: 'absolute',
-                        top: '25%',
-                        left: '50%',
-                        transform: 'translateX(-50%) translateY(-50%)',
-                        color: '#a93331',
-                        textAlign: 'center',
-                        zIndex: 3,
-                        textShadow: '2px 2px 20px #494746',
-                        textDecoration: 'none',
-                    }}
-                >
-                    Schedule Fit
-                </Typography>
-                <Typography
-                    variant='h1'
-                    fontWeight='bold'
-                    sx={{
-                        position: 'absolute',
-                        top: '25%',
-                        left: '50.3%',
-                        transform: 'translateX(-50%) translateY(-45%)',
-                        color: '#494746',
-                        textAlign: 'center',
-                        zIndex: 2,
-                    }}
-                >
-                    Schedule Fit
-                </Typography>
-                <Card sx={{ width: 350, padding: 2, zIndex: 1, position: 'relative' }}>
+                <CustomHeader text='Schedule Fit' variant='h1' margin={30} />
+                <Card sx={{ width: 650, padding: 2, zIndex: 1, position: 'relative' }}>
                     <CardContent>
                         <Typography variant='h5' component='div' textAlign='center' gutterBottom>
-                            Login
+                            Sign Up
                         </Typography>
 
                         {/* Login stuff??? */}
@@ -117,17 +90,19 @@ function Login() {
                         {/* Wrap in a form element */}
                         <form onSubmit={submit}>
                             <Stack spacing={2}>
+                                <Stack direction='row' spacing={2}>
+                                    <TextField label='First Name' value={firstName} onChange={(e) => setFirstName(e.target.value)} fullWidth />
+                                    <TextField label='Last Name' value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
+                                </Stack>
                                 <TextField label='Username' value={username} onChange={(e) => setUsername(e.target.value)} variant='outlined' fullWidth />
-                                <TextField label='Password' type='password' onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
+                                <TextField label='Password' type={showPassword ? 'text' : 'password'} onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
+                                <TextField label='Confirm Password' type='password' onChange={(e) => setConfirmPassword(e.target.value)} variant='outlined' fullWidth />
 
                                 <Button type='submit' variant='contained' color='primary' fullWidth>
                                     Sign In
                                 </Button>
                             </Stack>
                         </form>
-                        <Typography variant='body2' color='text.secondary' textAlign='center' mt={2}>
-                            Don't have an account? <Link to={'/Register'}>Sign Up</Link>
-                        </Typography>
                     </CardContent>
                 </Card>
                 {/* Loading overlay */}
@@ -139,4 +114,4 @@ function Login() {
     );
 }
 
-export default Login;
+export default Register;
