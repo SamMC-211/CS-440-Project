@@ -17,12 +17,14 @@
     - Express.js
 - Database
     - MySQL?
+    - SQLite(3)
 - Additional Packages/Libraries
     - React Router
     - Bootstrap
     - Material UI
         - Fontsource roboto
         - MUI Icons-material
+    - bcrypt Hashing
 - Miscellaneous
     - Globals
         - Responsive meta tag
