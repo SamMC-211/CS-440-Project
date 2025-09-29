@@ -23,6 +23,17 @@ function Register({ setSnackbar }: RegisterProps) {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
+    function validateEmail(e) {
+        setError(null);
+        if (e.target.value === '') {
+            setError('');
+        } else if (/\S+@\S+\.\S+/.test(e.target.value)) {
+            setEmail(e.target.value);
+        } else {
+            setError('Email is invalid');
+        }
+    }
+
     async function submit(e: React.FormEvent) {
         e.preventDefault(); //stop page from reloading upon form submission ()
         setLoading(true);
@@ -104,12 +115,12 @@ function Register({ setSnackbar }: RegisterProps) {
                                     <TextField label='First Name' value={firstName} onChange={(e) => setFirstName(e.target.value)} fullWidth />
                                     <TextField label='Last Name' value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
                                 </Stack>
-                                <TextField label='Email' value={email} onChange={(e) => setEmail(e.target.value)} variant='outlined' fullWidth />
+                                <TextField label='Email' type='email' onChange={(e) => setEmail(e.target.value)} onBlur={(e) => validateEmail(e)} variant='outlined' fullWidth />
                                 <TextField label='Password' type={showPassword ? 'text' : 'password'} onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
                                 <TextField label='Confirm Password' type='password' onChange={(e) => setConfirmPassword(e.target.value)} variant='outlined' fullWidth />
 
                                 <Button type='submit' variant='contained' color='primary' fullWidth>
-                                    Sign In
+                                    Register
                                 </Button>
                             </Stack>
                         </form>
