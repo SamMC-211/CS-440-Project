@@ -6,6 +6,18 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
         console.error('Error opening databse:', err.message);
     } else {
         console.log('Connected to SQLite database');
+        console.log('User Entries:');
+        db.all('SELECT * from users', (err, row) => {
+            if (err) {
+                console.log('Error displaying users');
+            } else if (row) {
+                row.forEach((user, index) => {
+                    console.log(user);
+                });
+            } else {
+                console.log('Error displaying users');
+            }
+        });
     }
 });
 
@@ -14,11 +26,10 @@ db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS users (
         firstname TEXT NOT NULL,
-        lastname TEXT,
-        email TEXT NOT NULL UNIQUE,
-        username TEXT PRIMARY KEY,
+        lastname TEXT NOT NULL,
+        email TEXT NOT NULL PRIMARY KEY,
         password TEXT NOT NULL
-        )'
+        )
     `);
 });
 

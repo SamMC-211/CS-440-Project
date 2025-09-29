@@ -36,23 +36,33 @@ app.use(
     })
 );
 
+// ================================Login=====================================================
+
 // API: login (POST request)
 //Once the server recieves a POST with param '/api/login' the handler function(req, res) => is called
+//TODO: Check hashed password
 app.post('/api/login', (req, res) => {
     // Simulate load time
     setTimeout(() => {
-        const { username, password } = req.body || {}; //parse POST body into username and password
-        if (!username || !password) return res.status(400).json({ ok: false, message: 'Missing' }); // If username or password not recieved, respond accordingly
+        const { email, password } = req.body || {}; //parse POST body into email and password
+        if (!email || !password) return res.status(400).json({ ok: false, message: 'Missing email or password' }); // If email or password not recieved, respond accordingly
 
-        const user = USERS.find((u) => u.username === username && u.password === password); // returns first element in USERS array where POSTed username/password match
-        if (!user) return res.status(401).json({ ok: false, message: 'Invalid credentials' }); //If no user is returned, respond accordingly
+        db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, row) => {
+            if (err) {
+                return res.status(500).json({ ok: false, message: 'Login Error', error: err.message });
+            }
 
-        // Save minimal info to session
-        req.session.user = {
-            username: user.username,
-            displayName: user.displayName,
-        };
-        return res.json({ ok: true, user: req.session.user }); //Return ok and session user
+            if (!row) {
+                return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+            }
+
+            if (row.password === password) {
+                req.session.user = { email: row.email }; //save user session
+                return res.json({ ok: true, user: req.session.user });
+            } else {
+                return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+            }
+        });
     }, 2000);
 });
 
@@ -75,6 +85,38 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
+// ================================Register=====================================================
+//TODO: Hash pasword before storing
+app.post('/api/register', (req, res) => {
+    //Simulate Load time
+    setTimeout(() => {
+        const { firstName, lastName, email, password } = req.body;
+
+        // Basic input validation (avoid empty values)
+        if (!firstName || !lastName || !email || !password) {
+            return res.status(400).json({ ok: false, message: 'All fields are required' });
+        }
+
+        //Check that user with email does not already exist
+        db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+            if (err) {
+                return res.status(500).json({ ok: false, error: err.message, message: 'Registration Failed' });
+            } else if (row) {
+                return res.status(400).json({ ok: false, message: 'A user with this email already exists' });
+            }
+            //If email in not in the database, add user
+            db.run('INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)', [firstName, lastName, email, password], (err) => {
+                if (err) {
+                    res.status(500).json({ ok: false, error: err.message, message: 'Registration Failed' });
+                } else {
+                    res.json({ ok: true, message: 'Registration Successful' });
+                }
+            });
+        });
+    }, 2000);
+});
+
+// ================================Finalize=====================================================
 /* Optional: serve frontend in production
    Put your Vite build into /dist and serve it:
 */

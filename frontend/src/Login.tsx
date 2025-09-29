@@ -1,7 +1,8 @@
 // Backround image needs to be imported
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import gymImage from './assets/gym_image.jpg';
 // MUI
-import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop } from '@mui/material';
+import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop, InputAdornment, IconButton } from '@mui/material';
 
 // Login Page Imports
 import React, { useState } from 'react';
@@ -9,8 +10,9 @@ import { useNavigate, Link } from 'react-router';
 
 function Login() {
     // Backend login stuff
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -26,7 +28,7 @@ function Login() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include', // << important to include cookies
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ email, password }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -117,8 +119,22 @@ function Login() {
                         {/* Wrap in a form element */}
                         <form onSubmit={submit}>
                             <Stack spacing={2}>
-                                <TextField label='Username' value={username} onChange={(e) => setUsername(e.target.value)} variant='outlined' fullWidth />
-                                <TextField label='Password' type='password' onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
+                                <TextField label='Email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} variant='outlined' fullWidth />
+                                <TextField
+                                    label='Password'
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    variant='outlined'
+                                    fullWidth
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position='end'>
+                                                <IconButton onClick={() => setShowPassword(!showPassword)}>{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
 
                                 <Button type='submit' variant='contained' color='primary' fullWidth>
                                     Sign In

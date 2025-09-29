@@ -3,15 +3,18 @@ import gymImage from './assets/gym_image.jpg';
 import CustomHeader from './components/CustomHeader';
 // MUI
 import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop } from '@mui/material';
-
 // Login Page Imports
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
+//Global snackbar element prop for page component
+type RegisterProps = {
+    setSnackbar: React.Dispatch<React.SetStateAction<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>>;
+};
 
-function Register() {
+function Register({ setSnackbar }: RegisterProps) {
     // Backend login stuff
-    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [firstName, setFirstName] = useState('');
@@ -21,25 +24,32 @@ function Register() {
     const navigate = useNavigate();
 
     async function submit(e: React.FormEvent) {
-        e.preventDefault();
+        e.preventDefault(); //stop page from reloading upon form submission ()
         setLoading(true);
         setError(null);
 
+        //Confirm password matches
+        if (password !== confirmPassword) {
+            setError('Passwords do no match');
+            return;
+        }
+
         //Tries a post request
         try {
-            const res = await fetch('/api/login', {
+            const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // << important to include cookies
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ firstName, lastName, email, password }),
             });
             const data = await res.json();
             if (!res.ok) {
-                setError(data.message || 'Login failed');
+                setError(data.message || 'Registration failed');
                 return;
             }
-            // success -> navigate to home
-            navigate('/home');
+            // success -> navigate to login
+            navigate('/login');
+            //Snackbar popup to inform user that their account was successfully registered
+            setSnackbar({ open: true, message: 'Account Registered', severity: 'success' });
         } catch (err) {
             setError('Network error');
             console.log(err);
@@ -94,7 +104,7 @@ function Register() {
                                     <TextField label='First Name' value={firstName} onChange={(e) => setFirstName(e.target.value)} fullWidth />
                                     <TextField label='Last Name' value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
                                 </Stack>
-                                <TextField label='Username' value={username} onChange={(e) => setUsername(e.target.value)} variant='outlined' fullWidth />
+                                <TextField label='Email' value={email} onChange={(e) => setEmail(e.target.value)} variant='outlined' fullWidth />
                                 <TextField label='Password' type={showPassword ? 'text' : 'password'} onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
                                 <TextField label='Confirm Password' type='password' onChange={(e) => setConfirmPassword(e.target.value)} variant='outlined' fullWidth />
 
