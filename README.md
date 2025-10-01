@@ -24,6 +24,7 @@
     - Material UI
         - Fontsource roboto
         - MUI Icons-material
+        - MUI X-Data-Grid
     - bcrypt Hashing
 - Miscellaneous
     - Globals
