@@ -27,7 +27,7 @@ app.use(
     session({
         secret: process.env.SESSION_SECRET || 'dev-secret', // use strong value in prod
         resave: false, //dont save session to store unless modified?
-        saveUninitialized: false, //dont create empty sessions for anon users
+        saveUninitialized: false, //specifies when a session is initialized (false: will only initialize when something is written to req.session)
         cookie: {
             httpOnly: true, //JS cant read cookies (more secure)
             secure: false, // set true in production (HTTPS)
@@ -60,7 +60,8 @@ app.post('/api/login', (req, res) => {
             }
 
             if (row.password === password) {
-                req.session.user = { email: row.email }; //save user session
+                req.session.user = { email: row.email }; //save user session, initializes session
+                console.log('Session just initialized:', req.session);
                 return res.json({ ok: true, user: req.session.user });
             } else {
                 return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
@@ -74,7 +75,7 @@ app.post('/api/login', (req, res) => {
 app.get('/api/me', (req, res) => {
     //Simulate loading
     setTimeout(() => {
-        if (req.session && req.session.user) return res.json({ ok: true, user: req.session.user });
+        if (req.session && req.session.user) return res.json({ ok: true, user: req.session.user }); //if a session
         return res.status(401).json({ ok: false, message: 'Not authenticated' });
     }, 2000);
 });
