@@ -30,7 +30,7 @@
     - Globals
         - Responsive meta tag
         - CssBaseline
-    - Express-session
+    - Express-session (middleware)
 
 ## Steps for getting started on your machine
 
