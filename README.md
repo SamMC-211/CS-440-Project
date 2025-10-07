@@ -16,7 +16,6 @@
 - Backend Framework
     - Express.js
 - Database
-    - MySQL?
     - SQLite(3)
 - Additional Packages/Libraries
     - React Router
@@ -57,9 +56,47 @@
 5. Similarly to creating the frontend you're going to navigate into the "backend" directory and run "npm install express" to install Express.js 
 
 ## MUI Learning
-- Figure out  \<Typography variant='h5' component='div' textAlign='center' gutterBottom>
-- Figure out color='primary'
+- Figure out gutter bottom attribute\<Typography variant='h5' component='div' textAlign='center' gutterBottom>
+- Figure out MUI color theme color='primary'
 
 ## Misc. To-Do
 - Change Site icon
-- At what level do I create a wrapper loading component that will render a loading overlay when attempting to route to different Pages, at the App.tsx level orrrr
+- Input checking on registration
+- Create schema for whole project
+- Decide pages to be split up
+- Decide how to seperate users, service prov., admin in database
+
+
+## Demo 1 To-Do
+- Registration
+    - Must be able to register as user or service provider
+    - "role" columns should be either "user", "provider", "admin"
+    - Include additional "service provider name" field for service provider registration
+- Database 
+    - Service provider users need a "service_provider_name" field
+- Creating Appointments
+    - Overlapping time slots are ok as long as the room number is different and the provider_id is different
+    - When an appointment is created it MUST have a  
+        - appointment_id
+        - provider_id 
+        - room_id
+        - start/end time
+    - Display current user's created appointments
+    - Add provider_id as foreign key in addition to user_id
+    - provider_id should not be null 
+- Booking appointments
+    - Check that appointment isn't status: "booked"
+    - Check that user doesn't already have appointment booked during time slot
+    - Display to users whether or not appointments have already been booked
+    - Display current user's booked appointments (Use the user's cookies/session on server can be used to tell which user is logged in)
+- Service provider Home Page
+    - Menu to create appointment
+    - Display their appointment along with
+        - Status
+        - Room number/id
+        - Start/End time
+- User Home Page
+    - Display/menu to select appointments to book
+    - display booked appointments to users
+- Misc. 
+    - Add logout button to user pages (Will destroy a users open session, allowing us to log in as other users again)
