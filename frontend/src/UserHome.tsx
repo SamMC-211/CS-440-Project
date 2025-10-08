@@ -16,6 +16,10 @@ import {
   AppBar,
   Typography,
   Toolbar,
+  Card,
+  CardContent,
+  TextField,
+  Switch
 } from "@mui/material";
 import { Link } from "react-router";
 import { useCallback, useEffect, useState } from "react";
@@ -77,6 +81,24 @@ function UserHome() {
     role: "",
     email: ""
   });
+
+
+  // appointment data
+  const [appointment, setAppointment] = useState({
+    title: "",
+    type: "",
+    room: "",
+    time: "",
+    description: ""
+  });
+  
+
+  // Add appointment (not users)
+  const addAppointment = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  
+    //TODO, Check if appointment in room exists, make sure it is an hour span.
+  };
 
   //States
   const [rows, setRows] = useState([]);
@@ -178,6 +200,78 @@ function UserHome() {
         </Container> }
 
         { user.role == "provider" && 
+        <span>
+        <Box sx={{ flexGrow: 1, marginTop: 5, marginBottom: 5 }}>
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Hello, {user.firstName}
+              </Typography>
+            </Toolbar>
+          </AppBar>
+        </Box> 
+          <Container>
+            <Card sx={{ width: 650, padding: 2, zIndex: 1, position: 'relative' }}>
+              <CardContent>
+                  <Typography variant='h5' component='div' textAlign='center' gutterBottom>
+                      Create Appointment
+                  </Typography>
+
+                  {/* Wrap in a form element */}
+                  <form onSubmit={addAppointment}>
+                     <Stack spacing={2}>
+                    <TextField label="Appointment Title" value={appointment.title} onChange={(e) => setAppointment({ ...appointment, title: e.target.value })} fullWidth/>
+
+                    <TextField select label="Type" value={appointment.type} onChange={(e) => setAppointment({ ...appointment, type: e.target.value })} fullWidth
+                      SelectProps={{
+                        native: true, // uses native HTML select
+                      }}
+                    >
+                      <option value=""></option>
+                      <option value="Consultation">Consultation</option>
+                      <option value="Training">Training</option>
+                      <option value="Follow-up">Follow-up</option>
+                    </TextField>
+
+                    <TextField select label="Room" value={appointment.room} onChange={(e) => setAppointment({ ...appointment, room: e.target.value })} fullWidth
+                      SelectProps={{
+                        native: true,
+                      }}
+                    >
+                      <option value=""></option>
+                      <option value="Room 101">Room 101</option>
+                      <option value="Room 102">Room 102</option>
+                      <option value="Room 103">Room 103</option>
+                    </TextField>
+
+                    <TextField select label="Timeslot" value={appointment.time} onChange={(e) => setAppointment({ ...appointment, time: e.target.value })} fullWidth
+                      SelectProps={{
+                        native: true,
+                      }}
+                    >
+                      <option value=""></option>
+                      <option value="9:00-10:00">9:00-10:00</option>
+                      <option value="10:00-11:00">10:00-11:00</option>
+                      <option value="11:00-12:00">11:00-12:00</option>
+                    </TextField>
+
+                    <TextField label="Description" value={appointment.description} onChange={(e) => setAppointment({ ...appointment, description: e.target.value })} multiline rows={4} fullWidth/>
+                    
+                    {/* Submit Button */}
+                    <Button type="submit" variant="contained" color="primary" fullWidth>
+                      Create Appointment
+                    </Button>
+
+                    </Stack>
+                </form>
+              </CardContent>
+          </Card>
+            
+              </Container>
+          </span>
+        }
+
+        { user.role == "dev" &&  //admin I guess
         <Box sx={{ flexGrow: 1, marginTop: 5, marginBottom: 5 }}>
           <AppBar position="static">
             <Toolbar>
