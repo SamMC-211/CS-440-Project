@@ -43,6 +43,25 @@ function UserHome() {
       .catch((err) => console.error(err));
   }, []);
 
+  //optimizing so only calls once
+  useEffect(() => {
+    fetch("/api/users/active", { method: "GET", credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) {
+          setUser({
+            firstName: data.user.first_name,
+            lastName: data.user.last_name,
+            role: data.user.role,
+            email: data.user.email
+          });
+        } else {
+          setError("Failed to fetch user");
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
   //User table definition
   const columns: GridColDef[] = [
     { field: "firstname", headerName: "First Name", flex: 1 },
@@ -50,6 +69,14 @@ function UserHome() {
     { field: "email", headerName: "Email", flex: 1 },
     { field: "password", headerName: "Password", flex: 1 },
   ];
+
+  //active user data
+  const [user, setUser] = useState({
+    firstName: "",
+    lastName: "",
+    role: "",
+    email: ""
+  });
 
   //States
   const [rows, setRows] = useState([]);
@@ -102,12 +129,14 @@ function UserHome() {
             zIndex: 0,
           }}
         />
+        {/*only displays the user display if is user role. */}
+        { user.role == "user" && 
         <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
           <Box sx={{ flexGrow: 1, marginTop: 5, marginBottom: 5 }}>
             <AppBar position="static">
               <Toolbar>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                  User Home
+                  Hello, {user.firstName}
                 </Typography>
               </Toolbar>
             </AppBar>
@@ -146,7 +175,18 @@ function UserHome() {
               </Paper>
             </Grid>
           </Grid>
-        </Container>
+        </Container> }
+
+        { user.role == "provider" && 
+        <Box sx={{ flexGrow: 1, marginTop: 5, marginBottom: 5 }}>
+          <AppBar position="static">
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Hello, {user.firstName}
+              </Typography>
+            </Toolbar>
+          </AppBar>
+        </Box> }
       </Box>
     </>
   );

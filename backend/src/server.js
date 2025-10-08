@@ -94,7 +94,9 @@ app.post('/api/logout', (req, res) => {
 app.post('/api/register', (req, res) => {
     //Simulate Load time
     setTimeout(() => {
-        const { firstName, lastName, email, password } = req.body;
+        const { firstName, lastName, email, password, isProvider } = req.body;
+
+        let role = isProvider ? "user" : "provider";
 
         // Basic input validation (avoid empty values)
         if (!firstName || !lastName || !email || !password) {
@@ -116,7 +118,7 @@ app.post('/api/register', (req, res) => {
                 });
             }
             //If email in not in the database, add user
-            db.run('INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)', [firstName, lastName, email, password], (err) => {
+            db.run('INSERT INTO users (firstname, lastname, email, password, role) VALUES (?, ?, ?, ?)', [firstName, lastName, email, password, role], (err) => {
                 if (err) {
                     res.status(500).json({
                         ok: false,
@@ -149,6 +151,28 @@ app.get('/api/users', (req, res) => {
             return res.json({ success: true, results: rows, count: rows.length }); //Wrap rows in object, useful for including metadata
             // return res.json(rows);
         }
+    });
+});
+
+app.get('/api/users/active', (req, res) => {
+    // Check if a session exists
+    if (!req.session.user) {
+        return res.status(401).json({ ok: false, message: 'No active user found' });
+    }
+
+    const userEmail = req.session.user.email;
+
+    // Now you can query the DB for the rest of the user info
+    db.get('SELECT first_name, last_name, role, email FROM users WHERE email = ?', [userEmail], (err, row) => {
+        if (err) {
+            return res.status(500).json({ ok: false, message: 'Error fetching active user', error: err.message });
+        }
+
+        if (!row) {
+            return res.status(404).json({ ok: false, message: 'User not found' });
+        }
+
+        return res.json({ ok: true, user: row });
     });
 });
 
