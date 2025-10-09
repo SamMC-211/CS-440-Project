@@ -40,13 +40,13 @@ function getRooms(callback) {
 // ---------------- APPOINTMENTS ----------------
 
 // Provider creates/open a time slot
-function createAppointment(providerId, startTime, endTime, roomId, apptType, callback) {
+function createAppointment(providerId, startTime, endTime, roomId, apptType, date, callback) {
     const sql = `
-		INSERT INTO appointments (provider_id, start_time, end_time, room_id, appt_type, status, is_booked)
-		VALUES (?, ?, ?, ?, ?, 'open', 0)
+		INSERT INTO appointments (provider_id, start_time, end_time, room_id, appt_type, date, status, is_booked)
+		VALUES (?, ?, ?, ?, ?, ?, 'open', 0)
 	`;
     //this.lastID = this(statement object just executed) lastID = (auto incremented ID of last inserted row)
-    db.run(sql, [providerId, startTime, endTime, roomId, apptType], function (err) {
+    db.run(sql, [providerId, startTime, endTime, roomId, apptType, date], function (err) {
         callback(err, { appt_id: this?.lastID });
     });
 }
@@ -96,6 +96,7 @@ function getAppointmentsForList(callback) {
       appointments.is_booked    AS is_booked,
       appointments.start_time   AS start_time,
       appointments.end_time     AS end_time,
+      appointments.date         AS date,
       appointments.appt_id      AS appt_id
     FROM appointments
     JOIN users   ON appointments.provider_id = users.user_id

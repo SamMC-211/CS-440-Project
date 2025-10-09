@@ -72,18 +72,19 @@ db.serialize(() => {
 
     db.run(`
         CREATE TABLE IF NOT EXISTS appointments (
-        appt_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        provider_id INTEGER,
-        start_time TEXT NOT NULL, 
-        end_time TEXT NOT NULL, 
-        is_booked INTEGER NOT NULL DEFAULT 0, -- 0=false, 1=true
-        user_id INTEGER, 
-        room_id INTEGER NOT NULL, 
-        appt_type TEXT, 
-        status TEXT NOT NULL DEFAULT 'open', -- 'open', 'booked', 'cancelled'
-	FOREIGN KEY (provider_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
-        FOREIGN KEY (room_id) REFERENCES rooms(room_id) ON DELETE RESTRICT ON UPDATE CASCADE
+            appt_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            provider_id INTEGER,
+            date TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            is_booked INTEGER NOT NULL DEFAULT 0, -- 0=false, 1=true
+            user_id INTEGER,
+            room_id INTEGER NOT NULL,
+            appt_type TEXT,
+            status TEXT NOT NULL DEFAULT 'open', -- 'open', 'booked', 'cancelled'
+            FOREIGN KEY (provider_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (room_id) REFERENCES rooms(room_id) ON DELETE RESTRICT ON UPDATE CASCADE
         )
     `);
 });

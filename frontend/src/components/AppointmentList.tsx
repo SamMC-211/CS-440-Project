@@ -2,6 +2,7 @@ import React from 'react';
 import { List, ListSubheader, ListItem, ListItemText, Divider, Paper, Button, Typography } from '@mui/material';
 
 type Appointment = {
+    date: string;
     appt_id: number;
     provider_name: string;
     provider_firstname: string;
@@ -46,7 +47,7 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, li
                     // Build the three lines exactly as requested
                     const primary = `${a.provider_name} | ${a.provider_firstname} ${a.provider_lastname} | ${a.appt_type}`;
                     const secondary = `Room ${a.room_num} | status: ${a.status}`;
-                    const tertiary = `${a.start_time} - ${a.end_time}`;
+                    const tertiary = `${a.date} | ${a.start_time} - ${a.end_time}`;
 
                     const booked = Number(a.is_booked ?? 0) !== 0;
                     const showBook = role === 'user' && !booked && typeof onBook === 'function';

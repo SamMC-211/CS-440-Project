@@ -182,7 +182,7 @@ app.get('/api/users/active', (req, res) => {
 
 // ================================Appointments=====================================================
 app.post('/api/appointments', (req, res) => {
-    const { userID, title, type, room, time, description, role } = req.body;
+    const { userID, title, type, date, room, time, description, role } = req.body;
 
     if (role !== 'provider') {
         return res.status(400).json({ ok: false, message: 'You must be a service provider to create appointments!' });
@@ -208,10 +208,9 @@ app.post('/api/appointments', (req, res) => {
 
         //room exists then, get its id
         const roomID = row.room_id;
-
         //create appointment
-        dbhelper.createAppointment(userID, times[0], times[1], roomID, type, (err, result) => {
-            if (err) {
+        dbhelper.createAppointment(userID, times[0], times[1], roomID, type, date, (err, result) => {
+            if (err) {          
                 return res.status(500).json({ ok: false, message: 'Error inserting appointment', error: err.message });
             } else {
                 //if result exists then access .appt_id otherwise return entire "result"

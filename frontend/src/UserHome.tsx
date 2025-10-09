@@ -31,6 +31,10 @@ import {
 } from '@mui/material';
 import { useNavigate, Link } from 'react-router';
 import { useCallback, useEffect, useState } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format } from 'date-fns';
 
 function UserHome() {
     //active user data
@@ -48,6 +52,7 @@ function UserHome() {
         type: '',
         room: '',
         time: '',
+        date: '',
         description: '',
     };
     const [appointment, setAppointment] = useState(initialAppointment);
@@ -399,6 +404,22 @@ function UserHome() {
                                                 <option value='102'>Room 102</option>
                                                 <option value='103'>Room 103</option>
                                             </TextField>
+
+                                           <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                            <DatePicker
+                                                label="Appointment Date"
+                                                value={appointment.date ? new Date(appointment.date) : null} // parse string back to Date for picker
+                                                onChange={(newValue) => {
+                                                if (newValue) {
+                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                    setAppointment({ ...appointment, date: formattedDate });
+                                                } else {
+                                                    setAppointment({ ...appointment, date: '' });
+                                                }
+                                                }}
+                                                minDate={new Date()}
+                                            />
+                                            </LocalizationProvider>
 
                                             <TextField
                                                 select
