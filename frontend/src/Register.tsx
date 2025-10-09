@@ -2,7 +2,7 @@
 import gymImage from './assets/gym_image.jpg';
 import CustomHeader from './components/CustomHeader';
 // MUI
-import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop, Switch, FormControlLabel } from '@mui/material';
+import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop, Switch, FormControlLabel, Collapse } from '@mui/material';
 // Login Page Imports
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
@@ -22,9 +22,10 @@ function Register({ setSnackbar }: RegisterProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null); //<Type of state (string or null)> (Initial value)
     const [isProvider, setIsProvider] = useState(false);
+    const [providerName, setProviderName] = useState('');
     const navigate = useNavigate();
 
-    function validateEmail(e : any) {
+    function validateEmail(e: any) {
         setError(null);
         if (e.target.value === '') {
             setError('');
@@ -43,6 +44,7 @@ function Register({ setSnackbar }: RegisterProps) {
         //Confirm password matches
         if (password !== confirmPassword) {
             setError('Passwords do no match');
+            setLoading(false);
             return;
         }
 
@@ -51,7 +53,7 @@ function Register({ setSnackbar }: RegisterProps) {
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, email, password, isProvider }),
+                body: JSON.stringify({ firstName, lastName, email, password, isProvider, providerName }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -119,17 +121,20 @@ function Register({ setSnackbar }: RegisterProps) {
                                 <TextField label='Email' type='email' onChange={(e) => setEmail(e.target.value)} onBlur={(e) => validateEmail(e)} variant='outlined' fullWidth />
                                 <TextField label='Password' type={showPassword ? 'text' : 'password'} onChange={(e) => setPassword(e.target.value)} variant='outlined' fullWidth />
                                 <TextField label='Confirm Password' type='password' onChange={(e) => setConfirmPassword(e.target.value)} variant='outlined' fullWidth />
-                                
-                                <FormControlLabel
-                                control={
-                                    <Switch
-                                    checked={isProvider}
-                                    onChange={(e) => setIsProvider(e.target.checked)}
-                                    color='primary'
+
+                                <FormControlLabel control={<Switch checked={isProvider} onChange={(e) => setIsProvider(e.target.checked)} color='primary' />} label='Are you a service provider?' />
+
+                                {/* Sliding additional field */}
+                                <Collapse in={isProvider}>
+                                    <TextField
+                                        label='Service Provider Name'
+                                        value={providerName}
+                                        onChange={(e) => setProviderName(e.target.value)}
+                                        variant='outlined'
+                                        fullWidth
+                                        sx={{ mt: 2 }} // optional margin-top for spacing
                                     />
-                                }
-                                label='Are you a service provider?'
-                                />
+                                </Collapse>
                                 <Button type='submit' variant='contained' color='primary' fullWidth>
                                     Register
                                 </Button>

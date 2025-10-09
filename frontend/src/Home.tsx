@@ -65,14 +65,14 @@ function Home() {
                 </Button>
                 <CompanyTitle margin={50} />
                 <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
-                    <Grid container spacing={6}>
+                    {/* <Grid container spacing={6}>
                         <Grid size={4}>
-                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                            <Paper elevation={3} sx={{ p: 2 }}>
                                 <CustomHeader variant='h4' text='About Us' />
                             </Paper>
                         </Grid>
                         <Grid size={8}>
-                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                            <Paper elevation={3} sx={{ p: 2 }}>
                                 <CustomHeader variant='h4' text='Mission Statement  ' />
                             </Paper>
                         </Grid>
@@ -82,7 +82,7 @@ function Home() {
                             </Button>
                         </Grid>
                         <Grid size={12}>
-                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                            <Paper elevation={3} sx={{ p: 2 }}>
                                 <CustomHeader text='Meet our Trainers' variant='h3' />
                                 <Grid container spacing={4}>
                                     <Grid size={6}>grid 1</Grid>
@@ -92,29 +92,7 @@ function Home() {
                                 </Grid>
                             </Paper>
                         </Grid>
-                        <Grid size={6}>
-                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                <Typography variant='body1'>
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse lacinia eros arcu, vel dapibus massa hendrerit hendrerit. Curabitur vel lobortis magna, sed vestibulum nulla. Fusce quis tristique leo.
-                                    Aenean nunc velit, tincidunt in nisi id, eleifend aliquam quam. Ut ac ligula in sem tempor rutrum molestie ac odio. Cras erat arcu, bibendum nec lacinia vel, facilisis ut nisi. Nullam lectus ipsum,
-                                    suscipit in libero non, hendrerit bibendum dolor. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse lacinia eros arcu, vel dapibus massa hendrerit hendrerit. Curabitur vel lobortis
-                                    magna, sed vestibulum nulla. Fusce quis tristique leo. Aenean nunc velit, tincidunt in nisi id, eleifend aliquam quam. Ut ac ligula in sem tempor rutrum molestie ac odio. Cras erat arcu, bibendum nec
-                                    lacinia vel, facilisis ut nisi. Nullam lectus ipsum, suscipit in libero non, hendrerit bibendum dolor.
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid size={6}>
-                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                <Typography variant='body1'>
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse lacinia eros arcu, vel dapibus massa hendrerit hendrerit. Curabitur vel lobortis magna, sed vestibulum nulla. Fusce quis tristique leo.
-                                    Aenean nunc velit, tincidunt in nisi id, eleifend aliquam quam. Ut ac ligula in sem tempor rutrum molestie ac odio. Cras erat arcu, bibendum nec lacinia vel, facilisis ut nisi. Nullam lectus ipsum,
-                                    suscipit in libero non, hendrerit bibendum dolor. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse lacinia eros arcu, vel dapibus massa hendrerit hendrerit. Curabitur vel lobortis
-                                    magna, sed vestibulum nulla. Fusce quis tristique leo. Aenean nunc velit, tincidunt in nisi id, eleifend aliquam quam. Ut ac ligula in sem tempor rutrum molestie ac odio. Cras erat arcu, bibendum nec
-                                    lacinia vel, facilisis ut nisi. Nullam lectus ipsum, suscipit in libero non, hendrerit bibendum dolor.
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                    </Grid>
+                    </Grid> */}
                 </Container>
 
                 {/* Loading overlay */}

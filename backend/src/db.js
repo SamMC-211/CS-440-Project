@@ -6,16 +6,43 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
         console.error('Error opening databse:', err.message);
     } else {
         console.log('Connected to SQLite database');
-        console.log('User Entries:');
+        //display users
         db.all('SELECT * from users', (err, row) => {
             if (err) {
                 console.log('Error displaying users');
             } else if (row) {
+                console.log('User Entries:');
                 row.forEach((user, index) => {
                     console.log(user);
                 });
             } else {
                 console.log('Error displaying users');
+            }
+        });
+        //display rooms
+        db.all('SELECT * from rooms', (err, row) => {
+            if (err) {
+                console.log('Error displaying rooms');
+            } else if (row) {
+                console.log('Room Entries:');
+                row.forEach((user, index) => {
+                    console.log(user);
+                });
+            } else {
+                console.log('Error displaying rooms');
+            }
+        });
+        //display appointments
+        console.log('Appointment Entries:');
+        db.all('SELECT * from appointments', (err, row) => {
+            if (err) {
+                console.log('Error displaying appointments');
+            } else if (row) {
+                row.forEach((user, index) => {
+                    console.log(user);
+                });
+            } else {
+                console.log('Error displaying appointments');
             }
         });
     }
@@ -31,7 +58,8 @@ db.serialize(() => {
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         is_active INTEGER NOT NULL DEFAULT 0, -- 0=false, 1=true
-        role TEXT NOT NULL -- 'user', 'provider', or 'dev'
+        role TEXT NOT NULL, -- 'user', 'provider', or 'dev'
+        provider_name TEXT UNIQUE
         )
     `);
 
