@@ -52,6 +52,7 @@ function createAppointment(providerId, startTime, endTime, roomId, apptType, dat
 }
 
 // User books an appointment
+/*
 function bookAppointment(apptId, userId, callback) {
     const sql = `
 		UPDATE appointments
@@ -62,6 +63,58 @@ function bookAppointment(apptId, userId, callback) {
     db.run(sql, [userId, apptId], function (err) {
         callback(err, { changes: this?.changes });
     });
+}
+*/
+
+// User books an appointment WITH conflict checks
+function bookAppointment(apptId, userId, callback) {
+
+	// get the appointment slot details
+	const getApptSql = 'SELECT * FROM appointments WHERE appt_id = ?';
+
+	db.get(getApptSql, [apptId], (err, appt) => {
+		if(err) return callback(err);
+		if(!appt) return callback(new Error("Appointment not found."));
+		if(appt.is_booked || appt.status !== 'open') {
+			return callback(new Error("This appointment slot is already booked."));
+		}
+
+		// check if the user already has a conflicting appointment
+		const conflicSql = '
+			SELECT * FROM appointments
+			WHERE user_id = ?
+			AND status = 'booked'
+			AND (
+				(start_time < ? AND end_time > ?) // overlapping window
+				OR (start_time >= ? AND start_time < ?)
+			)
+		';
+
+		db.get(conflictSql, [userId, appt.end_time, appt.start_time, appt.start_time, appt.end_time], (err, conflict) => {
+			if(err) return callback(err);
+			if(conflict) {
+				return callback(new Error("User already has an appointment at this time."));
+			}
+
+			// book the appointment
+			const updateSql = '
+				UPDATE appointments
+				SET user_id = ?, is_booked = 1, status = 'booked'
+				WHERE appt_id = ? AND status = 'open'
+			';
+
+			db.run(updateSql, [userId, apptId], function (err) {
+				if(err) return callback(err);
+				if(this.changes === 0) {
+					return callback(new Error("Failed to book appointment (might already be booked)."));
+				}
+				callback(null, { message : "Appointment booked successfully", appt_id: apptId});
+			});
+
+		});
+
+	});
+
 }
 
 // Cancel an appointment (make it open again)
