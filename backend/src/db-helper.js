@@ -136,6 +136,28 @@ function getAppointments(callback) {
     });
 }
 
+// check if an appt already exists for a given provider/time/room/day
+function getAppointmentByDetails(providerId, startTime, endTime, roomId, callback) {
+
+	const sql = '
+		SELECT *
+		FROM appointments
+		WHERE provider_id = ?
+		AND room_id = ?
+		AND (
+			(start_time < ? AND end_time > ?) // overlap condition
+			OR (start_time >= ? AND start_time < ?)
+		)
+	';
+
+	db.get(sql, [providerId, roomId, endTime, startTime, startTime, endTime], (err, row) => {
+		if(err) return callback(err);
+		if(!row) return callback(null, null); // no conflict
+		callback(null, row); // return conflicting appt
+	});
+
+}
+
 function getAppointmentsForList(callback) {
     const sql = `
     SELECT
@@ -172,4 +194,5 @@ module.exports = {
     cancelAppointment,
     getAppointments,
     getAppointmentsForList,
+    getAppointmentByDetails
 };
