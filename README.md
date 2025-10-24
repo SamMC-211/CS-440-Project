@@ -100,3 +100,8 @@
     - display booked appointments to users
 - Misc. 
     - Add logout button to user pages (Will destroy a users open session, allowing us to log in as other users again)
+
+## Demo 1 To-Do
+- Remove infinite loading from create appointment
+- Error check time and date
+- display booked and created appointments

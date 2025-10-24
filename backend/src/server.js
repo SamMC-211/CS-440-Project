@@ -111,6 +111,10 @@ app.post('/api/register', (req, res) => {
     if (role === 'provider' && !providerName) {
         return res.status(400).json({ ok: false, message: 'Service Provider Name Required' });
     }
+    //If user is not provider set providerName = null
+    if (role === 'user' && providerName) {
+        return res.status(400).json({ ok: false, message: 'User Cannot Have a Provider Name ' });
+    }
 
     //Check that user with email does not already exist
     db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
@@ -210,7 +214,7 @@ app.post('/api/appointments', (req, res) => {
         const roomID = row.room_id;
         //create appointment
         dbhelper.createAppointment(userID, times[0], times[1], roomID, type, date, (err, result) => {
-            if (err) {          
+            if (err) {
                 return res.status(500).json({ ok: false, message: 'Error inserting appointment', error: err.message });
             } else {
                 //if result exists then access .appt_id otherwise return entire "result"

@@ -1,12 +1,16 @@
 // Backround image needs to be imported
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import Background from './components/Background';
 import gymImage from './assets/gym_image.jpg';
 // MUI
-import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop, InputAdornment, IconButton } from '@mui/material';
+import { Box, Card, CardContent, Typography, Stack, TextField, Button, Alert, CircularProgress, Backdrop, InputAdornment, IconButton, Container } from '@mui/material';
 
 // Login Page Imports
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
+import CustomHeader from './components/CustomHeader';
+
+const EMAIL_REGEX = /\S+@\S+\.\S+/g;
 
 function Login() {
     // Backend login stuff
@@ -21,6 +25,15 @@ function Login() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        console.log('submit');
+
+        //Error check email
+        if (!email.match(EMAIL_REGEX) && password != '') {
+            console.log('error');
+            setError('Email is invalid');
+            setLoading(false);
+            return;
+        }
 
         //Tries a post request
         try {
@@ -48,104 +61,64 @@ function Login() {
     //Actual page content
     return (
         <>
+            <Background />
             <Box
                 sx={{
                     minHeight: '100vh', // full viewport height
-                    minWidth: '100vw',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    // Backticks to insert JS into CSS
-                    backgroundImage: `url(${gymImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
+                    width: '100vw',
+                    display: 'flex', // use flexbox
+                    justifyContent: 'center', // horizontal centering
+                    alignItems: 'center', // vertical centering
+                    padding: 2, // optional padding
                 }}
             >
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        inset: 0, // shorthand for top/right/bottom/left: 0
-                        background: 'linear-gradient(45deg,rgba(19, 22, 24, 1) 0%, rgba(19, 22, 24, 0.27) 100%)',
-                    }}
-                />
-                <Typography
-                    component={Link}
-                    to='/'
-                    variant='h1'
-                    fontWeight='bold'
-                    sx={{
-                        position: 'absolute',
-                        top: '25%',
-                        left: '50%',
-                        transform: 'translateX(-50%) translateY(-50%)',
-                        color: '#a93331',
-                        textAlign: 'center',
-                        zIndex: 3,
-                        textShadow: '2px 2px 20px #494746',
-                        textDecoration: 'none',
-                    }}
-                >
-                    Schedule Fit
-                </Typography>
-                <Typography
-                    variant='h1'
-                    fontWeight='bold'
-                    sx={{
-                        position: 'absolute',
-                        top: '25%',
-                        left: '50.3%',
-                        transform: 'translateX(-50%) translateY(-45%)',
-                        color: '#494746',
-                        textAlign: 'center',
-                        zIndex: 2,
-                    }}
-                >
-                    Schedule Fit
-                </Typography>
-                <Card sx={{ width: 350, padding: 2, zIndex: 1, position: 'relative' }}>
-                    <CardContent>
-                        <Typography variant='h5' component='div' textAlign='center' gutterBottom>
-                            Login
-                        </Typography>
+                <Stack spacing={2} direction={'column'} alignItems={'center'}>
+                    <CustomHeader text='Schedule Fit' variant='h1' margin={30} />
+                    <Card sx={{ width: 350, padding: 2, zIndex: 1, position: 'relative' }}>
+                        <CardContent>
+                            <Typography variant='h5' component='div' textAlign='center' gutterBottom>
+                                Login
+                            </Typography>
 
-                        {/* Login stuff??? */}
-                        {error && (
-                            <Alert severity='error' sx={{ mb: 2 }}>
-                                {error}
-                            </Alert>
-                        )}
+                            {/* Login stuff??? */}
+                            {error && (
+                                <Alert severity='error' sx={{ mb: 2 }}>
+                                    {error}
+                                </Alert>
+                            )}
 
-                        {/* Wrap in a form element */}
-                        <form onSubmit={submit}>
-                            <Stack spacing={2}>
-                                <TextField label='Email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} variant='outlined' fullWidth />
-                                <TextField
-                                    label='Password'
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    variant='outlined'
-                                    fullWidth
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position='end'>
-                                                <IconButton onClick={() => setShowPassword(!showPassword)}>{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
+                            {/* Wrap in a form element */}
+                            <form onSubmit={submit} noValidate>
+                                <Stack spacing={2}>
+                                    <TextField label='Email' type='email' value={email} onChange={(e) => setEmail(e.target.value)} variant='outlined' fullWidth />
+                                    <TextField
+                                        label='Password'
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        variant='outlined'
+                                        fullWidth
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position='end'>
+                                                    <IconButton onClick={() => setShowPassword(!showPassword)}>{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
 
-                                <Button type='submit' variant='contained' color='primary' fullWidth>
-                                    Sign In
-                                </Button>
-                            </Stack>
-                        </form>
-                        <Typography variant='body2' color='text.secondary' textAlign='center' mt={2}>
-                            Don't have an account? <Link to={'/Register'}>Sign Up</Link>
-                        </Typography>
-                    </CardContent>
-                </Card>
+                                    <Button type='submit' variant='contained' color='primary' fullWidth>
+                                        Sign In
+                                    </Button>
+                                </Stack>
+                            </form>
+                            <Typography variant='body2' color='text.secondary' textAlign='center' mt={2}>
+                                Don't have an account? <Link to={'/Register'}>Sign Up</Link>
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Stack>
+
                 {/* Loading overlay */}
                 <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
                     <CircularProgress color='inherit' />

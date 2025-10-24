@@ -22,7 +22,7 @@ function Register({ setSnackbar }: RegisterProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null); //<Type of state (string or null)> (Initial value)
     const [isProvider, setIsProvider] = useState(false);
-    const [providerName, setProviderName] = useState('');
+    const [providerName, setProviderName] = useState<string | null>(null);
     const navigate = useNavigate();
 
     function validateEmail(e: any) {

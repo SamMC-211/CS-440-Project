@@ -28,6 +28,8 @@ import {
     Backdrop,
     IconButton,
     Avatar,
+    ToggleButtonGroup,
+    ToggleButton,
 } from '@mui/material';
 import { useNavigate, Link } from 'react-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -37,6 +39,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 
 function UserHome() {
+    //======================================Constants===========================================================
     //active user data
     const initialUser = {
         userID: '',
@@ -61,6 +64,7 @@ function UserHome() {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [appointmentList, setAppointmentList] = useState([]);
+    const [toggleButton, setToggleButton] = useState('book');
     //Snackbar component
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -76,6 +80,7 @@ function UserHome() {
         { field: 'password', headerName: 'Password', flex: 1 },
     ];
 
+    //======================================UseEffect===========================================================
     //If user is admin, pull list of users
     useEffect(() => {
         // Only fetch if the user is a provider
@@ -103,7 +108,7 @@ function UserHome() {
             .catch((err) => console.error(err));
     }, [user.role]);
 
-    //Grab active user information
+    //Grab active user information o
     useEffect(() => {
         fetch('/api/users/active', { method: 'GET', credentials: 'include' })
             .then((res) => res.json())
@@ -139,7 +144,9 @@ function UserHome() {
             .catch((err) => console.error(err));
     }, [snackbar]);
 
-    //LOGOUT
+    //======================================OnClick Functions===========================================================
+
+    //Logout
     async function handleLogout() {
         try {
             const res = await fetch('/api/logout', {
@@ -165,10 +172,14 @@ function UserHome() {
         }
     }
 
-    // Add appointment (not users)
+    //switch toggle button
+    const handleToggleButton = (event: React.MouseEvent<HTMLElement>, alignButton: string) => {
+        setToggleButton(alignButton);
+    };
+
+    //Add appointment (role: provider)
     async function addAppointment(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setLoading(true);
         setError(null);
 
         if (user.role !== 'provider') {
@@ -181,6 +192,9 @@ function UserHome() {
             setError('Please fill out all fields!');
             return;
         }
+
+        //Now set loading to true
+        setLoading(true);
 
         //Tries a post request
         try {
@@ -205,6 +219,7 @@ function UserHome() {
         }
     }
 
+    //Book appointment (role: user)
     async function bookAppointment(appt: any) {
         // Basic checks
         if (!user) {
@@ -331,6 +346,11 @@ function UserHome() {
                                 </Box>
                                 {/* Spacer pushes hamburger to the right */}
                                 <Box sx={{ flexGrow: 1 }} />
+                                <ToggleButtonGroup color='secondary' value={toggleButton} exclusive onChange={handleToggleButton} aria-label='Platform' sx={{ '& .MuiToggleButton-root': { borderWidth: 2 } }}>
+                                    <ToggleButton value='book'>Book</ToggleButton>
+                                    <ToggleButton value='view_appointment'>View Appointments</ToggleButton>
+                                    <ToggleButton value='other'>Other</ToggleButton>
+                                </ToggleButtonGroup>
                                 <DrawerButton />
                             </Toolbar>
                         </AppBar>
@@ -405,20 +425,20 @@ function UserHome() {
                                                 <option value='103'>Room 103</option>
                                             </TextField>
 
-                                           <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                            <DatePicker
-                                                label="Appointment Date"
-                                                value={appointment.date ? new Date(appointment.date) : null} // parse string back to Date for picker
-                                                onChange={(newValue) => {
-                                                if (newValue) {
-                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                    setAppointment({ ...appointment, date: formattedDate });
-                                                } else {
-                                                    setAppointment({ ...appointment, date: '' });
-                                                }
-                                                }}
-                                                minDate={new Date()}
-                                            />
+                                            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                <DatePicker
+                                                    label='Appointment Date'
+                                                    value={appointment.date ? new Date(appointment.date) : null} // parse string back to Date for picker
+                                                    onChange={(newValue) => {
+                                                        if (newValue) {
+                                                            const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                            setAppointment({ ...appointment, date: formattedDate });
+                                                        } else {
+                                                            setAppointment({ ...appointment, date: '' });
+                                                        }
+                                                    }}
+                                                    minDate={new Date()}
+                                                />
                                             </LocalizationProvider>
 
                                             <TextField

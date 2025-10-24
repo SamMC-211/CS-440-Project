@@ -68,19 +68,18 @@ function bookAppointment(apptId, userId, callback) {
 
 // User books an appointment WITH conflict checks
 function bookAppointment(apptId, userId, callback) {
+    // get the appointment slot details
+    const getApptSql = 'SELECT * FROM appointments WHERE appt_id = ?';
 
-	// get the appointment slot details
-	const getApptSql = 'SELECT * FROM appointments WHERE appt_id = ?';
+    db.get(getApptSql, [apptId], (err, appt) => {
+        if (err) return callback(err);
+        if (!appt) return callback(new Error('Appointment not found.'));
+        if (appt.is_booked || appt.status !== 'open') {
+            return callback(new Error('This appointment slot is already booked.'));
+        }
 
-	db.get(getApptSql, [apptId], (err, appt) => {
-		if(err) return callback(err);
-		if(!appt) return callback(new Error("Appointment not found."));
-		if(appt.is_booked || appt.status !== 'open') {
-			return callback(new Error("This appointment slot is already booked."));
-		}
-
-		// check if the user already has a conflicting appointment
-		const conflicSql = '
+        // check if the user already has a conflicting appointment
+        const conflicSql = `
 			SELECT * FROM appointments
 			WHERE user_id = ?
 			AND status = 'booked'
@@ -88,33 +87,30 @@ function bookAppointment(apptId, userId, callback) {
 				(start_time < ? AND end_time > ?) // overlapping window
 				OR (start_time >= ? AND start_time < ?)
 			)
-		';
+		`;
 
-		db.get(conflictSql, [userId, appt.end_time, appt.start_time, appt.start_time, appt.end_time], (err, conflict) => {
-			if(err) return callback(err);
-			if(conflict) {
-				return callback(new Error("User already has an appointment at this time."));
-			}
+        db.get(conflictSql, [userId, appt.end_time, appt.start_time, appt.start_time, appt.end_time], (err, conflict) => {
+            if (err) return callback(err);
+            if (conflict) {
+                return callback(new Error('User already has an appointment at this time.'));
+            }
 
-			// book the appointment
-			const updateSql = '
+            // book the appointment
+            const updateSql = `
 				UPDATE appointments
 				SET user_id = ?, is_booked = 1, status = 'booked'
 				WHERE appt_id = ? AND status = 'open'
-			';
+			`;
 
-			db.run(updateSql, [userId, apptId], function (err) {
-				if(err) return callback(err);
-				if(this.changes === 0) {
-					return callback(new Error("Failed to book appointment (might already be booked)."));
-				}
-				callback(null, { message : "Appointment booked successfully", appt_id: apptId});
-			});
-
-		});
-
-	});
-
+            db.run(updateSql, [userId, apptId], function (err) {
+                if (err) return callback(err);
+                if (this.changes === 0) {
+                    return callback(new Error('Failed to book appointment (might already be booked).'));
+                }
+                callback(null, { message: 'Appointment booked successfully', appt_id: apptId });
+            });
+        });
+    });
 }
 
 // Cancel an appointment (make it open again)
@@ -138,8 +134,7 @@ function getAppointments(callback) {
 
 // check if an appt already exists for a given provider/time/room/day
 function getAppointmentByDetails(providerId, startTime, endTime, roomId, callback) {
-
-	const sql = '
+    const sql = `
 		SELECT *
 		FROM appointments
 		WHERE provider_id = ?
@@ -148,14 +143,13 @@ function getAppointmentByDetails(providerId, startTime, endTime, roomId, callbac
 			(start_time < ? AND end_time > ?) // overlap condition
 			OR (start_time >= ? AND start_time < ?)
 		)
-	';
+	`;
 
-	db.get(sql, [providerId, roomId, endTime, startTime, startTime, endTime], (err, row) => {
-		if(err) return callback(err);
-		if(!row) return callback(null, null); // no conflict
-		callback(null, row); // return conflicting appt
-	});
-
+    db.get(sql, [providerId, roomId, endTime, startTime, startTime, endTime], (err, row) => {
+        if (err) return callback(err);
+        if (!row) return callback(null, null); // no conflict
+        callback(null, row); // return conflicting appt
+    });
 }
 
 function getAppointmentsForList(callback) {
@@ -194,5 +188,5 @@ module.exports = {
     cancelAppointment,
     getAppointments,
     getAppointmentsForList,
-    getAppointmentByDetails
+    getAppointmentByDetails,
 };

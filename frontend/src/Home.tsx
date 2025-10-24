@@ -1,6 +1,7 @@
 import gymImage from './assets/gym_image.jpg';
 import CompanyTitle from './components/CompanyTitle';
 import CustomHeader from './components/CustomHeader';
+import Background from './components/Background';
 // MUI
 import { Container, Grid, Box, Button, Paper, Typography } from '@mui/material';
 import { Link } from 'react-router';
@@ -9,99 +10,74 @@ function Home() {
     return (
         <>
             {/* Background */}
+            <Background />
+            <Button
+                component={Link}
+                to='/Login'
+                variant='contained'
+                sx={{
+                    position: 'absolute',
+                    width: 115,
+                    height: 37,
+                    top: 20,
+                    right: 40,
+                }}
+            >
+                Login
+            </Button>
             <Box
                 sx={{
-                    position: 'relative',
-                    minHeight: '100vh',
+                    minHeight: '100vh', // full viewport height
                     width: '100vw',
-                    display: 'flex',
-                    flexDirection: 'column', // default is column
-                    justifyContent: 'flex-start', // vertical centering
-                    alignItems: 'center', // horizontal centering if needed
+                    display: 'flex', // use flexbox
+                    justifyContent: 'center', // horizontal centering
+                    alignItems: 'center', // vertical centering
+                    padding: 2, // optional padding
                 }}
             >
                 <Box
                     sx={{
-                        position: 'fixed',
-                        inset: 0,
-                        minHeight: '100vh',
-                        width: '100vw',
-                        backgroundImage: `url(${gymImage})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundAttachment: 'fixed', // keeps background static
-                        zIndex: -1,
-                    }}
-                ></Box>
-                {/* Background gradient cover */}
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        inset: 0, // shorthand for top/right/bottom/left: 0
-                        minHeight: '100vh',
-                        width: '100vw',
-                        background: 'linear-gradient(45deg,rgba(19, 22, 24, 1) 0%, rgba(19, 22, 24, 0.27) 100%)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundAttachment: 'fixed', // keeps background static
-                        zIndex: 0,
-                    }}
-                />
-                <Button
-                    component={Link}
-                    to='/Login'
-                    variant='contained'
-                    sx={{
-                        position: 'absolute',
-                        width: 115,
-                        height: 37,
-                        top: 20,
-                        right: 40,
+                        display: 'flex',
+                        flexDirection: 'column', // stack vertically
+                        justifyContent: 'center',
+                        alignItems: 'center', // horizontal centering
+                        gap: 4, // spacing between children
+                        width: '100%',
+                        maxWidth: 'lg',
                     }}
                 >
-                    Login
-                </Button>
-                <CompanyTitle margin={50} />
-                <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
-                    {/* <Grid container spacing={6}>
+                    <CompanyTitle margin={50} />
+                    <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
+                        {/* <Grid container spacing={6}>
                         <Grid size={4}>
-                            <Paper elevation={3} sx={{ p: 2 }}>
-                                <CustomHeader variant='h4' text='About Us' />
-                            </Paper>
+                        <Paper elevation={3} sx={{ p: 2 }}>
+                        <CustomHeader variant='h4' text='About Us' />
+                        </Paper>
                         </Grid>
                         <Grid size={8}>
-                            <Paper elevation={3} sx={{ p: 2 }}>
-                                <CustomHeader variant='h4' text='Mission Statement  ' />
-                            </Paper>
+                        <Paper elevation={3} sx={{ p: 2 }}>
+                        <CustomHeader variant='h4' text='Mission Statement  ' />
+                        </Paper>
                         </Grid>
                         <Grid size={12}>
-                            <Button component={Link} to='/Login' variant='contained'>
-                                Button
-                            </Button>
+                        <Button component={Link} to='/Login' variant='contained'>
+                        Button
+                        </Button>
                         </Grid>
                         <Grid size={12}>
-                            <Paper elevation={3} sx={{ p: 2 }}>
-                                <CustomHeader text='Meet our Trainers' variant='h3' />
-                                <Grid container spacing={4}>
-                                    <Grid size={6}>grid 1</Grid>
-                                    <Grid size={6}>grid 2</Grid>
-                                    <Grid size={6}>grid 3</Grid>
-                                    <Grid size={6}>grid 4</Grid>
-                                </Grid>
-                            </Paper>
+                        <Paper elevation={3} sx={{ p: 2 }}>
+                        <CustomHeader text='Meet our Trainers' variant='h3' />
+                        <Grid container spacing={4}>
+                        <Grid size={6}>grid 1</Grid>
+                        <Grid size={6}>grid 2</Grid>
+                        <Grid size={6}>grid 3</Grid>
+                        <Grid size={6}>grid 4</Grid>
                         </Grid>
-                    </Grid> */}
-                </Container>
-
-                {/* Loading overlay */}
-                {/* <Backdrop
-          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-          open={loading}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop> */}
+                        </Paper>
+                        </Grid>
+                        </Grid> */}
+                    </Container>
+                </Box>
             </Box>
         </>
     );
