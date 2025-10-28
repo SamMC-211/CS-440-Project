@@ -178,6 +178,51 @@ function getAppointmentsForList(callback) {
     });
 }
 
+// ---------------- NOTIFICATIONS ----------------
+// Get all notifications
+function getNotifications(callback) {
+  const sql = `SELECT * FROM notifications ORDER BY time DESC`;
+  db.all(sql, [], (err, rows) => callback(err, rows));
+}
+
+// Get notifications for a specific user (most recent first)
+function getNotificationsByUser(userId, callback) {
+  const sql = `
+    SELECT *
+    FROM notifications
+    WHERE user_id = ?
+    ORDER BY time DESC
+  `;
+  db.all(sql, [userId], (err, rows) => callback(err, rows));
+}
+
+// Get a single notification by ID
+function getNotificationById(notifId, callback) {
+  const sql = `SELECT * FROM notifications WHERE notif_id = ?`;
+  db.get(sql, [notifId], (err, row) => callback(err, row || null));
+}
+
+// Create a notification (time defaults to now)
+function createNotification(userId, message, callback) {
+  const sql = `
+    INSERT INTO notifications (user_id, time, message)
+    VALUES (?, datetime('now'), ?)
+  `;
+  db.run(sql, [userId, message], function (err) {
+    if (err) return callback(err);
+    callback(null, { notif_id: this.lastID });
+  });
+}
+
+// Delete a notification
+function deleteNotification(notifId, callback) {
+  const sql = `DELETE FROM notifications WHERE notif_id = ?`;
+  db.run(sql, [notifId], function (err) {
+    if (err) return callback(err);
+    callback(null, { changes: this?.changes });
+  });
+}
+
 module.exports = {
     createUser,
     getUserByEmail,
@@ -189,4 +234,9 @@ module.exports = {
     getAppointments,
     getAppointmentsForList,
     getAppointmentByDetails,
+    getNotifications,
+    getNotificationsByUser,
+    getNotificationById,
+    createNotification,
+    deleteNotification
 };

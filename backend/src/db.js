@@ -87,6 +87,16 @@ db.serialize(() => {
             FOREIGN KEY (room_id) REFERENCES rooms(room_id) ON DELETE RESTRICT ON UPDATE CASCADE
         )
     `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS notifications (
+        notif_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        time TEXT NOT NULL,
+        message TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE
+        )
+    `);
 });
 //Allows the db object to be used outside of this file
 module.exports = db;
