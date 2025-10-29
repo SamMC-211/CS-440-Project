@@ -99,7 +99,7 @@ app.post('/api/logout', (req, res) => {
 //TODO: Hash pasword before storing
 app.post('/api/register', (req, res) => {
     //Simulate Load time
-    const { firstName, lastName, email, password, isProvider, providerName } = req.body;
+    const { firstName, lastName, email, password, isProvider, providerName, qualifications } = req.body;
 
     let role = isProvider ? 'provider' : 'user';
 
@@ -131,7 +131,7 @@ app.post('/api/register', (req, res) => {
             });
         }
 
-        dbhelper.createUser(firstName, lastName, email, password, role, providerName, (err, result) => {
+        dbhelper.createUser(firstName, lastName, email, password, role, providerName, qualifications, (err, result) => {
             if (err) {
                 return res.status(500).json({ ok: false, message: 'Registration Failed', error: err.message });
             } else {
@@ -213,7 +213,7 @@ app.post('/api/appointments', (req, res) => {
         //room exists then, get its id
         const roomID = row.room_id;
         //create appointment
-        dbhelper.createAppointment(userID, times[0], times[1], roomID, type, date, (err, result) => {
+        dbhelper.createAppointment(userID, title, times[0], times[1], roomID, type, date, description, (err, result) => {
             if (err) {
                 return res.status(500).json({ ok: false, message: 'Error inserting appointment', error: err.message });
             } else {

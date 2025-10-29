@@ -23,6 +23,7 @@ function Register({ setSnackbar }: RegisterProps) {
     const [error, setError] = useState<string | null>(null); //<Type of state (string or null)> (Initial value)
     const [isProvider, setIsProvider] = useState(false);
     const [providerName, setProviderName] = useState<string | null>(null);
+    const [qualifications, setQualifications] = useState<string | null>(null);
     const navigate = useNavigate();
 
     function validateEmail(e: any) {
@@ -53,7 +54,7 @@ function Register({ setSnackbar }: RegisterProps) {
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ firstName, lastName, email, password, isProvider, providerName }),
+                body: JSON.stringify({ firstName, lastName, email, password, isProvider, providerName, qualifications }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -132,6 +133,17 @@ function Register({ setSnackbar }: RegisterProps) {
                                         onChange={(e) => setProviderName(e.target.value)}
                                         variant='outlined'
                                         fullWidth
+                                        sx={{ mt: 2 }} // optional margin-top for spacing
+                                    />
+
+                                    <TextField
+                                        label='Qualifications'
+                                        value={qualifications}
+                                        onChange={(e) => setQualifications(e.target.value)}
+                                        variant='outlined'
+                                        fullWidth
+                                        multiline
+                                        rows={3}
                                         sx={{ mt: 2 }} // optional margin-top for spacing
                                     />
                                 </Collapse>

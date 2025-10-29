@@ -57,9 +57,10 @@ db.serialize(() => {
         last_name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
-        is_active INTEGER NOT NULL DEFAULT 0, -- 0=false, 1=true
-        role TEXT NOT NULL, -- 'user', 'provider', or 'dev'
-        provider_name TEXT UNIQUE
+        is_active INTEGER NOT NULL DEFAULT 0,
+        role TEXT NOT NULL,
+        provider_name TEXT UNIQUE,
+        qualifications TEXT
         )
     `);
 
@@ -74,14 +75,16 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS appointments (
             appt_id INTEGER PRIMARY KEY AUTOINCREMENT,
             provider_id INTEGER,
+            title TEXT NOT NULL,
             date TEXT NOT NULL,
             start_time TEXT NOT NULL,
             end_time TEXT NOT NULL,
-            is_booked INTEGER NOT NULL DEFAULT 0, -- 0=false, 1=true
+            is_booked INTEGER NOT NULL DEFAULT 0,
             user_id INTEGER,
             room_id INTEGER NOT NULL,
             appt_type TEXT,
-            status TEXT NOT NULL DEFAULT 'open', -- 'open', 'booked', 'cancelled'
+            description TEXT,
+            status TEXT NOT NULL DEFAULT 'open',
             FOREIGN KEY (provider_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
             FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
             FOREIGN KEY (room_id) REFERENCES rooms(room_id) ON DELETE RESTRICT ON UPDATE CASCADE

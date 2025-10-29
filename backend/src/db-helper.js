@@ -4,12 +4,12 @@ const db = require('./db');
 // ---------------- USERS ----------------
 
 // Create/register a new user or provider
-function createUser(firstName, lastName, email, password, role, providerName, callback) {
+function createUser(firstName, lastName, email, password, role, providerName, qualifications, callback) {
     const sql = `
-		INSERT INTO users (first_name, last_name, email, password, role, provider_name, is_active)
-		VALUES (?, ?, ?, ?, ?, ?, 1)
+		INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 1)
 	`;
-    db.run(sql, [firstName, lastName, email, password, role, providerName], function (err) {
+    db.run(sql, [firstName, lastName, email, password, role, providerName, qualifications], function (err) {
         callback(err, { user_id: this?.lastID });
     });
 }
@@ -40,13 +40,13 @@ function getRooms(callback) {
 // ---------------- APPOINTMENTS ----------------
 
 // Provider creates/open a time slot
-function createAppointment(providerId, startTime, endTime, roomId, apptType, date, callback) {
+function createAppointment(providerId, title, startTime, endTime, roomId, apptType, date, description, callback) {
     const sql = `
-		INSERT INTO appointments (provider_id, start_time, end_time, room_id, appt_type, date, status, is_booked)
-		VALUES (?, ?, ?, ?, ?, ?, 'open', 0)
+		INSERT INTO appointments (provider_id, title, start_time, end_time, room_id, appt_type, date, description, status, is_booked)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', 0)
 	`;
     //this.lastID = this(statement object just executed) lastID = (auto incremented ID of last inserted row)
-    db.run(sql, [providerId, startTime, endTime, roomId, apptType, date], function (err) {
+    db.run(sql, [providerId, title, startTime, endTime, roomId, apptType, date, description], function (err) {
         callback(err, { appt_id: this?.lastID });
     });
 }
@@ -166,7 +166,9 @@ function getAppointmentsForList(callback) {
       appointments.start_time   AS start_time,
       appointments.end_time     AS end_time,
       appointments.date         AS date,
-      appointments.appt_id      AS appt_id
+      appointments.appt_id      AS appt_id,
+      appointments.title        AS title,
+      appointments.description  AS description
     FROM appointments
     JOIN users   ON appointments.provider_id = users.user_id
     JOIN rooms   ON appointments.room_id     = rooms.room_id

@@ -3,6 +3,7 @@ import { List, ListSubheader, ListItem, ListItemText, Divider, Paper, Button, Ty
 
 type Appointment = {
     date: string;
+    title: string;
     appt_id: number;
     provider_name: string;
     provider_firstname: string;
@@ -13,6 +14,7 @@ type Appointment = {
     is_booked: number | boolean;
     start_time: string;
     end_time: string;
+    description: string;
 };
 
 type Props = {
@@ -45,7 +47,7 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, li
                     const key = `${a.provider_name}-${a.start_time}-${i}`;
 
                     // Build the three lines exactly as requested
-                    const primary = `${a.provider_name} | ${a.provider_firstname} ${a.provider_lastname} | ${a.appt_type}`;
+                    const primary = `${a.title} | ${a.provider_firstname} ${a.provider_lastname} | ${a.appt_type}`;
                     const secondary = `Room ${a.room_num} | status: ${a.status}`;
                     const tertiary = `${a.date} | ${a.start_time} - ${a.end_time}`;
 
