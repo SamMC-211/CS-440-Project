@@ -37,6 +37,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
+import { Title } from '@mui/icons-material';
 
 function UserHome() {
     //======================================Constants===========================================================
@@ -59,6 +60,11 @@ function UserHome() {
         description: '',
     };
     const [appointment, setAppointment] = useState(initialAppointment);
+    const initAppointmentRange = {
+        beforeDate: '',
+        afterDate: '',
+    }
+    const [appointmentRange, setAppointmentRange] = useState(initAppointmentRange);
     const [loading, setLoading] = useState(false);
     const [rows, setRows] = useState([]);
     const [error, setError] = useState<string | null>(null);
@@ -268,6 +274,39 @@ function UserHome() {
         }
     }
 
+    async function GetAppointmentsByDateRange() {
+        setError(null);
+
+        setLoading(true);
+        //Tries a post request
+        try {
+            const res = await fetch('/api/appointments', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userID: user.userID, ...appointmentRange, role: user.role }),
+            });
+            const data = await res.json();
+
+
+            if (!res.ok) {
+                setError(data.message || 'Failed to get appointments.');
+                return;
+            }
+            //Snackbar popup to inform user that their account was successfully registered
+            if (data.ok) {
+                setAppointmentList(data.results);
+            } else {
+                setError(data.message);
+            }
+            
+        } catch (err) {
+            setError('Network error');
+            console.log(err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     //useCallback: React hook to "memoize" function, meaning react will reuse the same function object between renders unless its dependencies change
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getRowID = useCallback((row: any) => row.email, []);
@@ -358,19 +397,54 @@ function UserHome() {
 
                     {/* Render Users */}
                     {user.role == 'user' && (
-                        <Grid container spacing={6}>
-                            <Grid size={6}>
-                                <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                    <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
-                                </Paper>
+                        <span>
+                            <Grid container spacing={6}>
+                                <Grid size={6}>
+                                     <Stack direction='row' spacing={2}  sx={{ p: 2, background: '#c1c3c5ff'}}>
+                                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                            <DatePicker
+                                                label='After'
+                                                value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
+                                                onChange={(newValue) => {
+                                                    if (newValue) {
+                                                        const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                        setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
+                                                        GetAppointmentsByDateRange();
+                                                        // TODO: Call function to filter
+                                                    }
+                                                }}
+                                                minDate={new Date()}
+                                            />
+                                        </LocalizationProvider>
+
+                                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                            <DatePicker
+                                                label='Before'
+                                                value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
+                                                onChange={(newValue) => {
+                                                    if (newValue) {
+                                                        const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                        setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
+                                                        GetAppointmentsByDateRange();
+                                                        // TODO: Call function to filter
+                                                    }
+                                                }}
+                                                minDate={new Date()}
+                                            />
+                                        </LocalizationProvider>
+                                    </Stack>
+                                    <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                        <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
+                                    </Paper>
+                                </Grid>
+                                <Grid size={6}>
+                                    <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                        {/* TODO: Dynamically update?? */}
+                                        <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
+                                    </Paper>
+                                </Grid>
                             </Grid>
-                            <Grid size={6}>
-                                <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                    {/* TODO: Dynamically update?? */}
-                                    <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
-                                </Paper>
-                            </Grid>
-                        </Grid>
+                        </span>
                     )}
 
                     {/* Render providers */}
