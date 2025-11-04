@@ -224,6 +224,35 @@ function deleteNotification(notifId, callback) {
     callback(null, { changes: this?.changes });
   });
 }
+// updated sql query
+function cancelAppointmentUpdated(apptId, callback) {
+  // First query: reopen the slot in appointments table
+  const sql1 = `
+    UPDATE appointments
+    SET user_id = NULL,
+        is_booked = 0,
+        status = 'open'
+    WHERE appt_id = ?
+  `;
+
+  // Second query: add an entry to the notification table
+  const sql2 = `
+    INSERT INTO notifications (user_id, time, message)
+    SELECT provider_id, start_time, 'Appointment was cancelled and slot reopened.'
+    FROM appointments
+    WHERE appt_id = ?
+  `;
+
+  db.serialize(() => {
+    db.run(sql1, [apptId], function (err) {
+      if (err) return callback(err);
+      // insert notification only if update succeeded
+      db.run(sql2, [apptId], function (err2) {
+        callback(err2, { changes: this?.changes });
+      });
+    });
+  });
+}
 
 module.exports = {
     createUser,
@@ -240,5 +269,6 @@ module.exports = {
     getNotificationsByUser,
     getNotificationById,
     createNotification,
-    deleteNotification
+    deleteNotification,
+    cancelAppointmentUpdated
 };
