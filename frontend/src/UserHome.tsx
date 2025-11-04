@@ -65,6 +65,7 @@ function UserHome() {
         afterDate: '',
     }
     const [appointmentRange, setAppointmentRange] = useState(initAppointmentRange);
+    const [appointmentSearchType, setSearchAppointmentType] = useState('');
     const [loading, setLoading] = useState(false);
     const [rows, setRows] = useState([]);
     const [error, setError] = useState<string | null>(null);
@@ -274,7 +275,7 @@ function UserHome() {
         }
     }
 
-    async function GetAppointmentsByDateRange() {
+    async function GetAppointmentsByDateRangeAndType() {
         setError(null);
 
         setLoading(true);
@@ -283,7 +284,7 @@ function UserHome() {
             const res = await fetch('/api/appointments', {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userID: user.userID, ...appointmentRange, role: user.role }),
+                body: JSON.stringify({ userID: user.userID, minDate: appointmentRange.afterDate,  maxDate: appointmentRange.beforeDate, type: appointmentSearchType ,role: user.role }),
             });
             const data = await res.json();
 
@@ -400,6 +401,26 @@ function UserHome() {
                         <span>
                             <Grid container spacing={6}>
                                 <Grid size={6}>
+                                    <TextField
+                                        select
+                                        label='Type'
+                                        value={appointmentSearchType}
+                                        onChange={(e) => {
+                                                setSearchAppointmentType(e.target.value);
+                                                GetAppointmentsByDateRangeAndType();
+                                            }
+                                        }
+                                        fullWidth
+                                        SelectProps={{
+                                            native: true,
+                                        }}
+                                    >
+                                        <option value=''></option>
+                                        <option value='Consultation'>Consultation</option>
+                                        <option value='Training'>Training</option>
+                                        <option value='Follow-up'>Follow-up</option>
+                                    </TextField>
+
                                      <Stack direction='row' spacing={2}  sx={{ p: 2, background: '#c1c3c5ff'}}>
                                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                                             <DatePicker
@@ -409,7 +430,7 @@ function UserHome() {
                                                     if (newValue) {
                                                         const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
                                                         setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
-                                                        GetAppointmentsByDateRange();
+                                                        GetAppointmentsByDateRangeAndType();
                                                         // TODO: Call function to filter
                                                     }
                                                 }}
@@ -425,7 +446,7 @@ function UserHome() {
                                                     if (newValue) {
                                                         const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
                                                         setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
-                                                        GetAppointmentsByDateRange();
+                                                        GetAppointmentsByDateRangeAndType();
                                                         // TODO: Call function to filter
                                                     }
                                                 }}

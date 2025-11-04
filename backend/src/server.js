@@ -8,6 +8,7 @@ const session = require('express-session'); // Middleware that manages user sess
 //SQLite (Runs db file once)
 const db = require('./db');
 const dbhelper = require('./db-helper');
+const { get } = require('http');
 
 //Server initializaton
 const app = express(); //create express app
@@ -235,6 +236,47 @@ app.get('/api/appointments/all', (req, res) => {
         }
     });
 });
+
+app.get('/api/appointments', (req, res) => {
+   // userID: user.userID,
+   //  minDate: appointmentRange.afterDate,  
+   // maxDate: appointmentRange.beforeDate, 
+   // type: appointmentSearchType ,
+   // role: user.role
+
+   dbhelper.getAppointmentsForList((err, results) => {
+        if (err) {
+            return res.status(500).json({ ok: false, message: 'Error retreiving Appointments', error: err.message });
+        } else {
+            let minDate = new Date();
+            if (!isNullOrWhiteSpace(req.minDate)) {
+                minDate = StringtoDate(req.minDate);
+            }
+
+            let maxDate = null;           
+            if (!isNullOrWhiteSpace(req.maxDate)) {
+                maxDate = StringtoDate(req.maxDate);
+            }
+
+            results = results.filter(results.type == req.type);
+
+            for (let i = 0; i < results.length; i++) {
+                results.date = StringToDate(results.Date);
+            }
+
+            results = results.filter(results.date >= req.minDate);
+            results = results.filter(results.date <= req.maxDate);
+
+            for (let i = 0; i < results.length; i++) {
+                results.date = DateToString(results.Date);
+            }
+s
+            return res.status(201).json({ ok: true, results: results });
+        }
+
+   });
+});
+
 
 app.post('/api/appointments/book', (req, res) => {
     const { userID, apptID } = req.body;
