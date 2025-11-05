@@ -21,3 +21,5 @@ function StringToDate(dateString) {
 function isNullOrWhiteSpace(str) {
   return !str || str.trim().length === 0;
 }
+
+module.exports = { DateToString, StringToDate, isNullOrWhiteSpace };

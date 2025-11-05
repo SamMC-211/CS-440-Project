@@ -1,7 +1,7 @@
 // server.js
 const express = require('express'); //require web framework
 const path = require('path'); //Built in node utility
-
+const { DateToString, StringToDate, isNullOrWhiteSpace } = require('./helpers');
 //Middleware
 const session = require('express-session'); // Middleware that manages user sessions (who is loged in across multipel requests) In real prod we'd use a real session store (a database or redis?)
 
@@ -238,45 +238,51 @@ app.get('/api/appointments/all', (req, res) => {
 });
 
 app.get('/api/appointments', (req, res) => {
-   // userID: user.userID,
-   //  minDate: appointmentRange.afterDate,  
-   // maxDate: appointmentRange.beforeDate, 
-   // type: appointmentSearchType ,
-   // role: user.role
+  dbhelper.getAppointmentsForList((err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ ok: false, message: 'Error retrieving appointments', error: err.message });
+    }
 
-   dbhelper.getAppointmentsForList((err, results) => {
-        if (err) {
-            return res.status(500).json({ ok: false, message: 'Error retreiving Appointments', error: err.message });
-        } else {
-            let minDate = new Date();
-            if (!isNullOrWhiteSpace(req.minDate)) {
-                minDate = StringtoDate(req.minDate);
-            }
+    try {
+      const { userID, minDate, maxDate, type, role } = req.query;
 
-            let maxDate = null;           
-            if (!isNullOrWhiteSpace(req.maxDate)) {
-                maxDate = StringtoDate(req.maxDate);
-            }
+      // Parse date filters
+      const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : null;
+      const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
 
-            results = results.filter(results.type == req.type);
+      // Convert result dates to Date objects for comparison
+     for(let i = 0; i < results.length; i++) {
+        results[i].date = StringToDate(results[i].date)
+     }
+      
+      // Apply filters
+      if (!isNullOrWhiteSpace(type)) {
+        results = results.filter(r => r.appt_type == type);
+      }
 
-            for (let i = 0; i < results.length; i++) {
-                results.date = StringToDate(results.Date);
-            }
+      if (min) {
+        results = results.filter(r => r.date >= min);
+      }
 
-            results = results.filter(results.date >= req.minDate);
-            results = results.filter(results.date <= req.maxDate);
+      if (max) {
+        results = results.filter(r => r.date <= max);
+      }
 
-            for (let i = 0; i < results.length; i++) {
-                results.date = DateToString(results.Date);
-            }
-s
-            return res.status(201).json({ ok: true, results: results });
-        }
-
-   });
+      // Convert date back to string for response
+     for(let i = 0; i < results.length; i++) {
+        results[i].date = DateToString(results[i].date)
+     }
+      
+      return res.status(200).json({ ok: true, results });
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ ok: false, message: 'Error processing appointment data', error: e.message });
+    }
+  });
 });
-
 
 app.post('/api/appointments/book', (req, res) => {
     const { userID, apptID } = req.body;

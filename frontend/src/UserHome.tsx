@@ -275,19 +275,30 @@ function UserHome() {
         }
     }
 
-    async function GetAppointmentsByDateRangeAndType() {
+    async function GetAppointmentsByDateRangeAndType(type:any = null, minDate:any = null, maxDate:any = null) {
         setError(null);
 
         setLoading(true);
         //Tries a post request
         try {
-            const res = await fetch('/api/appointments', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userID: user.userID, minDate: appointmentRange.afterDate,  maxDate: appointmentRange.beforeDate, type: appointmentSearchType ,role: user.role }),
-            });
-            const data = await res.json();
+            console.log("here")
 
+
+
+            const query = new URLSearchParams({
+                userID: user.userID,
+                minDate: minDate ?? appointmentRange.afterDate,
+                maxDate: maxDate ?? appointmentRange.beforeDate,
+                type: type ?? appointmentSearchType,
+                role: user.role
+            });
+
+            const res = await fetch(`/api/appointments?${query.toString()}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await res.json();
 
             if (!res.ok) {
                 setError(data.message || 'Failed to get appointments.');
@@ -406,14 +417,19 @@ function UserHome() {
                                         label='Type'
                                         value={appointmentSearchType}
                                         onChange={(e) => {
-                                                setSearchAppointmentType(e.target.value);
-                                                GetAppointmentsByDateRangeAndType();
+                            
+                                                
+                                                const newType = e.target.value;
+                                                setSearchAppointmentType(newType);
+                                                GetAppointmentsByDateRangeAndType(newType, null, null);
+                                               
                                             }
                                         }
                                         fullWidth
                                         SelectProps={{
                                             native: true,
                                         }}
+                                        sx={{ p: 2, background: '#c1c3c5ff' }}
                                     >
                                         <option value=''></option>
                                         <option value='Consultation'>Consultation</option>
@@ -430,7 +446,7 @@ function UserHome() {
                                                     if (newValue) {
                                                         const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
                                                         setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
-                                                        GetAppointmentsByDateRangeAndType();
+                                                        GetAppointmentsByDateRangeAndType(null, newValue, null);
                                                         // TODO: Call function to filter
                                                     }
                                                 }}
@@ -446,7 +462,7 @@ function UserHome() {
                                                     if (newValue) {
                                                         const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
                                                         setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
-                                                        GetAppointmentsByDateRangeAndType();
+                                                        GetAppointmentsByDateRangeAndType(null, null, newValue);
                                                         // TODO: Call function to filter
                                                     }
                                                 }}
