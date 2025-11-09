@@ -41,7 +41,28 @@ import { Title } from '@mui/icons-material';
 
 function UserHome() {
     //======================================Constants===========================================================
-    //active user data
+    type Appointment = {
+        appt_id: number;
+        provider_name:
+        provider_firstname:
+        provider_lastname:
+        appt_type:
+        room_num:
+        status:
+        is_booked:
+        start_time:
+        end_time:
+        date:
+        title:
+        description:
+    };
+    //Toggle Button Names by User type
+    const userToggleButtons = ['Dashboard', 'Book', 'View Appointments'];
+    const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
+    const adminToggleButtons = ['Dashboard', 'Manage', 'View Appointments'];
+    const [currentToggleButtons, setCurrentToggleButtons] = useState<string[]>([]);
+    const [toggleButton, setToggleButton] = useState(0);
+    //-------------------ACTIVE USER DATA-------------------
     const initialUser = {
         userID: '',
         firstName: '',
@@ -63,7 +84,7 @@ function UserHome() {
     const initAppointmentRange = {
         beforeDate: '',
         afterDate: '',
-    }
+    };
     const [appointmentRange, setAppointmentRange] = useState(initAppointmentRange);
     const [appointmentSearchType, setSearchAppointmentType] = useState('');
     const [loading, setLoading] = useState(false);
@@ -71,7 +92,6 @@ function UserHome() {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [appointmentList, setAppointmentList] = useState([]);
-    const [toggleButton, setToggleButton] = useState('book');
     //Snackbar component
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -115,7 +135,7 @@ function UserHome() {
             .catch((err) => console.error(err));
     }, [user.role]);
 
-    //Grab active user information o
+    //Grab active user information
     useEffect(() => {
         fetch('/api/users/active', { method: 'GET', credentials: 'include' })
             .then((res) => res.json())
@@ -129,12 +149,19 @@ function UserHome() {
                         email: data.user.email,
                         providerName: data.user.provider_name,
                     });
+                    if (user.role === 'admin') {
+                        setCurrentToggleButtons(adminToggleButtons);
+                    } else if (user.role === 'provider') {
+                        setCurrentToggleButtons(providerToggleButtons);
+                    } else {
+                        setCurrentToggleButtons(userToggleButtons);
+                    }
                 } else {
                     setError('Failed to fetch user');
                 }
             })
             .catch((err) => console.error(err));
-    }, []);
+    });
 
     //Grab all of the appointments from the database
     useEffect(() => {
@@ -180,7 +207,7 @@ function UserHome() {
     }
 
     //switch toggle button
-    const handleToggleButton = (event: React.MouseEvent<HTMLElement>, alignButton: string) => {
+    const handleToggleButton = (event: React.MouseEvent<HTMLElement>, alignButton: number) => {
         setToggleButton(alignButton);
     };
 
@@ -310,7 +337,6 @@ function UserHome() {
             } else {
                 setError(data.message);
             }
-            
         } catch (err) {
             setError('Network error');
             console.log(err);
@@ -398,9 +424,11 @@ function UserHome() {
                                 {/* Spacer pushes hamburger to the right */}
                                 <Box sx={{ flexGrow: 1 }} />
                                 <ToggleButtonGroup color='secondary' value={toggleButton} exclusive onChange={handleToggleButton} aria-label='Platform' sx={{ '& .MuiToggleButton-root': { borderWidth: 2 } }}>
-                                    <ToggleButton value='book'>Book</ToggleButton>
-                                    <ToggleButton value='view_appointment'>View Appointments</ToggleButton>
-                                    <ToggleButton value='other'>Other</ToggleButton>
+                                    {currentToggleButtons.map((label, index) => (
+                                        <ToggleButton key={index} value={index}>
+                                            {label}
+                                        </ToggleButton>
+                                    ))}
                                 </ToggleButtonGroup>
                                 <DrawerButton />
                             </Toolbar>
@@ -486,32 +514,39 @@ function UserHome() {
 
                     {/* Render providers */}
                     {user.role == 'provider' && (
-                        <span>
-                            <Card sx={{ width: 650, padding: 2, zIndex: 1, position: 'relative' }}>
-                                <CardContent>
-                                    <Typography variant='h5' component='div' textAlign='center' gutterBottom>
-                                        Create Appointment
-                                    </Typography>
+                        // <span>
+                            // <Card sx={{ width: 650, padding: 2, zIndex: 1, position: 'relative' }}>
+                            //     <CardContent>
+                            //         <Typography variant='h5' component='div' textAlign='center' gutterBottom>
+                            //             Create Appointment
+                            //         </Typography>
 
-                                    {error && (
-                                        <Alert severity='error' sx={{ mb: 2 }}>
-                                            {error}
-                                        </Alert>
-                                    )}
+                            //         {error && (
+                            //             <Alert severity='error' sx={{ mb: 2 }}>
+                            //                 {error}
+                            //             </Alert>
+                            //         )}
 
-                                    {/* Wrap in a form element */}
-                                    <form onSubmit={addAppointment}>
-                                        <Stack spacing={2}>
-                                            <TextField label='Appointment Title' value={appointment.title} onChange={(e) => setAppointment({ ...appointment, title: e.target.value })} fullWidth />
-
+                            //         {/* Wrap in a form element */}
+                            //         <form onSubmit={addAppointment}>
+                            //             <Stack spacing={2}>
+                            //                 <TextField label='Appointment Title' value={appointment.title} onChange={(e) => setAppointment({ ...appointment, title: e.target.value })} fullWidth />
+                        <Box>
+                            {toggleButton == 0 && (
+                                <span>
+                                    <Grid container spacing={6}>
+                                        <Grid size={6}>
                                             <TextField
                                                 select
                                                 label='Type'
-                                                value={appointment.type}
-                                                onChange={(e) => setAppointment({ ...appointment, type: e.target.value })}
+                                                value={appointmentSearchType}
+                                                onChange={(e) => {
+                                                    setSearchAppointmentType(e.target.value);
+                                                    GetAppointmentsByDateRangeAndType();
+                                                }}
                                                 fullWidth
                                                 SelectProps={{
-                                                    native: true, // uses native HTML select
+                                                    native: true,
                                                 }}
                                             >
                                                 <option value=''></option>
@@ -520,65 +555,154 @@ function UserHome() {
                                                 <option value='Follow-up'>Follow-up</option>
                                             </TextField>
 
-                                            <TextField
-                                                select
-                                                label='Room'
-                                                value={appointment.room}
-                                                onChange={(e) => setAppointment({ ...appointment, room: e.target.value })}
-                                                fullWidth
-                                                SelectProps={{
-                                                    native: true,
-                                                }}
-                                            >
-                                                <option value=''></option>
-                                                <option value='101'>Room 101</option>
-                                                <option value='102'>Room 102</option>
-                                                <option value='103'>Room 103</option>
-                                            </TextField>
+                                            <Stack direction='row' spacing={2} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                    <DatePicker
+                                                        label='After'
+                                                        value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
+                                                        onChange={(newValue) => {
+                                                            if (newValue) {
+                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                                setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
+                                                                GetAppointmentsByDateRangeAndType();
+                                                                // TODO: Call function to filter
+                                                            }
+                                                        }}
+                                                        minDate={new Date()}
+                                                    />
+                                                </LocalizationProvider>
 
-                                            <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                <DatePicker
-                                                    label='Appointment Date'
-                                                    value={appointment.date ? new Date(appointment.date) : null} // parse string back to Date for picker
-                                                    onChange={(newValue) => {
-                                                        if (newValue) {
-                                                            const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                            setAppointment({ ...appointment, date: formattedDate });
-                                                        } else {
-                                                            setAppointment({ ...appointment, date: '' });
-                                                        }
-                                                    }}
-                                                    minDate={new Date()}
-                                                />
-                                            </LocalizationProvider>
+                                                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                    <DatePicker
+                                                        label='Before'
+                                                        value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
+                                                        onChange={(newValue) => {
+                                                            if (newValue) {
+                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                                setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
+                                                                GetAppointmentsByDateRangeAndType();
+                                                                // TODO: Call function to filter
+                                                            }
+                                                        }}
+                                                        minDate={new Date()}
+                                                    />
+                                                </LocalizationProvider>
+                                            </Stack>
+                                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                                <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
+                                            </Paper>
+                                        </Grid>
+                                        <Grid size={6}>
+                                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                                {/* TODO: Dynamically update?? */}
+                                                <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
+                                            </Paper>
+                                        </Grid>
+                                    </Grid>
+                                </span>
+                            )}
+                        </Box>
+                    )}
 
-                                            <TextField
-                                                select
-                                                label='Timeslot'
-                                                value={appointment.time}
-                                                onChange={(e) => setAppointment({ ...appointment, time: e.target.value })}
-                                                fullWidth
-                                                SelectProps={{
-                                                    native: true,
-                                                }}
-                                            >
-                                                <option value=''></option>
-                                                <option value='9:00-10:00'>9:00-10:00</option>
-                                                <option value='10:00-11:00'>10:00-11:00</option>
-                                                <option value='11:00-12:00'>11:00-12:00</option>
-                                            </TextField>
-
-                                            <TextField label='Description' value={appointment.description} onChange={(e) => setAppointment({ ...appointment, description: e.target.value })} multiline rows={4} fullWidth />
-
-                                            {/* Submit Button */}
-                                            <Button type='submit' variant='contained' color='primary' fullWidth>
+                    {/* Render providers */}
+                    {user.role == 'provider' && (
+                        <Box>
+                            {toggleButton == 0 && (
+                                <span>
+                                    <Card sx={{ width: 650, padding: 2, zIndex: 1, position: 'relative' }}>
+                                        <CardContent>
+                                            <Typography variant='h5' component='div' textAlign='center' gutterBottom>
                                                 Create Appointment
-                                            </Button>
-                                        </Stack>
-                                    </form>
-                                </CardContent>
-                            </Card>
-                        </span>
+                                            </Typography>
+
+                                            {error && (
+                                                <Alert severity='error' sx={{ mb: 2 }}>
+                                                    {error}
+                                                </Alert>
+                                            )}
+
+                                            {/* Wrap in a form element */}
+                                            <form onSubmit={addAppointment}>
+                                                <Stack spacing={2}>
+                                                    <TextField label='Appointment Title' value={appointment.title} onChange={(e) => setAppointment({ ...appointment, title: e.target.value })} fullWidth />
+
+                                                    <TextField
+                                                        select
+                                                        label='Type'
+                                                        value={appointment.type}
+                                                        onChange={(e) => setAppointment({ ...appointment, type: e.target.value })}
+                                                        fullWidth
+                                                        SelectProps={{
+                                                            native: true, // uses native HTML select
+                                                        }}
+                                                    >
+                                                        <option value=''></option>
+                                                        <option value='Consultation'>Consultation</option>
+                                                        <option value='Training'>Training</option>
+                                                        <option value='Follow-up'>Follow-up</option>
+                                                    </TextField>
+
+                                                    <TextField
+                                                        select
+                                                        label='Room'
+                                                        value={appointment.room}
+                                                        onChange={(e) => setAppointment({ ...appointment, room: e.target.value })}
+                                                        fullWidth
+                                                        SelectProps={{
+                                                            native: true,
+                                                        }}
+                                                    >
+                                                        <option value=''></option>
+                                                        <option value='101'>Room 101</option>
+                                                        <option value='102'>Room 102</option>
+                                                        <option value='103'>Room 103</option>
+                                                    </TextField>
+
+                                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                        <DatePicker
+                                                            label='Appointment Date'
+                                                            value={appointment.date ? new Date(appointment.date) : null} // parse string back to Date for picker
+                                                            onChange={(newValue) => {
+                                                                if (newValue) {
+                                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                                    setAppointment({ ...appointment, date: formattedDate });
+                                                                } else {
+                                                                    setAppointment({ ...appointment, date: '' });
+                                                                }
+                                                            }}
+                                                            minDate={new Date()}
+                                                        />
+                                                    </LocalizationProvider>
+
+                                                    <TextField
+                                                        select
+                                                        label='Timeslot'
+                                                        value={appointment.time}
+                                                        onChange={(e) => setAppointment({ ...appointment, time: e.target.value })}
+                                                        fullWidth
+                                                        SelectProps={{
+                                                            native: true,
+                                                        }}
+                                                    >
+                                                        <option value=''></option>
+                                                        <option value='9:00-10:00'>9:00-10:00</option>
+                                                        <option value='10:00-11:00'>10:00-11:00</option>
+                                                        <option value='11:00-12:00'>11:00-12:00</option>
+                                                    </TextField>
+
+                                                    <TextField label='Description' value={appointment.description} onChange={(e) => setAppointment({ ...appointment, description: e.target.value })} multiline rows={4} fullWidth />
+
+                                                    {/* Submit Button */}
+                                                    <Button type='submit' variant='contained' color='primary' fullWidth>
+                                                        Create Appointment
+                                                    </Button>
+                                                </Stack>
+                                            </form>
+                                        </CardContent>
+                                    </Card>
+                                </span>
+                            )}
+                        </Box>
                     )}
 
                     {/* Render Admin */}
