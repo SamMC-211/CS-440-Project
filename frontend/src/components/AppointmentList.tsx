@@ -21,10 +21,11 @@ type Props = {
     appointments: Appointment[];
     role?: 'user' | 'provider';
     onBook?: (appt: Appointment) => void;
+    onCancel?: (appt: Appointment) => void;
     listTitle?: string;
 };
 
-export default function SlotListSimple({ appointments, role = 'user', onBook, listTitle = 'Available Sessions' }: Props) {
+export default function SlotListSimple({ appointments, role = 'user', onBook, onCancel, listTitle = 'Available Sessions' }: Props) {
     if (!appointments || appointments.length === 0) {
         return (
             <Paper elevation={3} sx={{ p: 2, mt: 4, margin: 'auto' }}>
@@ -53,6 +54,7 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, li
 
                     const booked = Number(a.is_booked ?? 0) !== 0;
                     const showBook = role === 'user' && !booked && typeof onBook === 'function';
+                    const showCancel = role === 'user' && booked && typeof onCancel === 'function';
 
                     return (
                         <React.Fragment key={key}>
@@ -63,7 +65,13 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, li
                                         <Button variant='contained' size='small' onClick={() => onBook!(a)}>
                                             Book
                                         </Button>
-                                    ) : (
+                                    ) 
+                                    : showCancel ? (
+                                         <Button variant='contained' size='small' onClick={() => onCancel!(a)}>
+                                            Cancel
+                                        </Button>
+                                    )
+                                    : (
                                         <Typography variant='body2' color='text.secondary' sx={{ minWidth: 72, textAlign: 'right' }}>
                                             {a.status}
                                         </Typography>

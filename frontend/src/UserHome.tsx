@@ -177,7 +177,7 @@ function UserHome() {
 
   //Grab all of the appointments from the database
   useEffect(() => {
-    fetch("/api/appointments/all", { method: "GET", credentials: "include" })
+    fetch("/api/appointments", { method: "GET", credentials: "include" })
       .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
       .then((data) => {
         //data is whatever I passed to res.json on the express side
@@ -338,6 +338,33 @@ function UserHome() {
     }
   }
 
+  async function cancelAppointment(appt: any) {
+    try {
+      const res = await fetch("/api/appointments/cancel", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userID: user.userID, apptID: appt.appt_id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Appointment Booking Failed");
+        return;
+      }
+      //Snackbar popup to inform user that their account was successfully registered
+      setSnackbar({
+        open: true,
+        message: "Appointment Booked!",
+        severity: "success",
+      });
+    } catch (err) {
+      setError("Network error");
+      console.log(err);
+    } finally {
+      getBookedAppointments();
+    }
+  }
+
   async function GetAppointmentsByDateRangeAndType(
     type: any = null,
     minDate: any = null,
@@ -397,7 +424,7 @@ function UserHome() {
         role: user.role,
       });
 
-      const res = await fetch(`/api/appointments?${query.toString()}`, {
+      const res = await fetch(`/api/appointments/booked?${query.toString()}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -627,7 +654,7 @@ function UserHome() {
                     {/* TODO: Dynamically update?? */}
                     <SlotList
                       appointments={bookedAppointmentList}
-                      onBook={(appt) => console.log("toExit")}
+                      onCancel={(appt) => cancelAppointment(appt)}
                       listTitle="Upcoming Appointments"
                     />
                   </Paper>
