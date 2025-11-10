@@ -284,6 +284,38 @@ app.get('/api/appointments', (req, res) => {
   });
 });
 
+app.get('/api/appointments/booked', (req, res) => {
+  dbhelper.getAppointmentsForList((err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ ok: false, message: 'Error retrieving appointments', error: err.message });
+    }
+
+    try {
+      const { userID } = req.query;
+
+      // Convert result dates to Date objects for comparison
+     for(let i = 0; i < results.length; i++) {
+        results[i].date = StringToDate(results[i].date)
+     }
+
+     results = results.filter(r => r.date >= new Date() && r.user_id == userID);
+
+      // Convert date back to string for response
+     for(let i = 0; i < results.length; i++) {
+        results[i].date = DateToString(results[i].date)
+     }
+      
+      return res.status(200).json({ ok: true, results });
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ ok: false, message: 'Error processing appointment data', error: e.message });
+    }
+  });
+});
+
 app.post('/api/appointments/book', (req, res) => {
     const { userID, apptID } = req.body;
     dbhelper.bookAppointment(apptID, userID, (err, results) => {

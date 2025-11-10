@@ -71,6 +71,7 @@ function UserHome() {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [appointmentList, setAppointmentList] = useState([]);
+    const [bookedAppointmentList, setBookedAppointmentList] = useState([]);
     const [toggleButton, setToggleButton] = useState('book');
     //Snackbar component
     const [snackbar, setSnackbar] = useState({
@@ -133,7 +134,8 @@ function UserHome() {
                     setError('Failed to fetch user');
                 }
             })
-            .catch((err) => console.error(err));
+            .catch((err) => console.error(err))
+            .finally( () => GetUserBookedAppointments());
     }, []);
 
     //Grab all of the appointments from the database
@@ -272,19 +274,14 @@ function UserHome() {
             console.log(err);
         } finally {
             setLoading(false);
+            GetUserBookedAppointments();
         }
     }
 
     async function GetAppointmentsByDateRangeAndType(type:any = null, minDate:any = null, maxDate:any = null) {
         setError(null);
-
-        setLoading(true);
         //Tries a post request
         try {
-            console.log("here")
-
-
-
             const query = new URLSearchParams({
                 userID: user.userID,
                 minDate: minDate ?? appointmentRange.afterDate,
@@ -314,9 +311,37 @@ function UserHome() {
         } catch (err) {
             setError('Network error');
             console.log(err);
-        } finally {
-            setLoading(false);
-        }
+        } 
+    }
+
+    async function GetUserBookedAppointments()
+    {
+        try {
+            const query = new URLSearchParams({
+                userID: user.userID,
+            });
+
+            const res = await fetch(`/api/appointments/booked?${query.toString()}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.message || 'Failed to get appointments.');
+                return;
+            }
+            //Snackbar popup to inform user that their account was successfully registered
+            if (data.ok) {
+                setBookedAppointmentList(data.results);
+            } else {
+                setError(data.message);
+            }   
+        } catch (err) {
+            setError('Network error');
+            console.log(err);
+        } 
+
     }
 
     //useCallback: React hook to "memoize" function, meaning react will reuse the same function object between renders unless its dependencies change
@@ -417,12 +442,9 @@ function UserHome() {
                                         label='Type'
                                         value={appointmentSearchType}
                                         onChange={(e) => {
-                            
-                                                
                                                 const newType = e.target.value;
                                                 setSearchAppointmentType(newType);
                                                 GetAppointmentsByDateRangeAndType(newType, null, null);
-                                               
                                             }
                                         }
                                         fullWidth
@@ -477,7 +499,7 @@ function UserHome() {
                                 <Grid size={6}>
                                     <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
                                         {/* TODO: Dynamically update?? */}
-                                        <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
+                                        <SlotList appointments={bookedAppointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Booked Appointments' />
                                     </Paper>
                                 </Grid>
                             </Grid>
