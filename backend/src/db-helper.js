@@ -166,7 +166,6 @@ function getAppointmentsForList(callback) {
       appointments.start_time   AS start_time,
       appointments.end_time     AS end_time,
       appointments.date         AS date,
-      appointments.appt_id      AS appt_id,
       appointments.title        AS title,
       appointments.description  AS description
     FROM appointments
@@ -183,51 +182,51 @@ function getAppointmentsForList(callback) {
 // ---------------- NOTIFICATIONS ----------------
 // Get all notifications
 function getNotifications(callback) {
-  const sql = `SELECT * FROM notifications ORDER BY time DESC`;
-  db.all(sql, [], (err, rows) => callback(err, rows));
+    const sql = `SELECT * FROM notifications ORDER BY time DESC`;
+    db.all(sql, [], (err, rows) => callback(err, rows));
 }
 
 // Get notifications for a specific user (most recent first)
 function getNotificationsByUser(userId, callback) {
-  const sql = `
+    const sql = `
     SELECT *
     FROM notifications
     WHERE user_id = ?
     ORDER BY time DESC
   `;
-  db.all(sql, [userId], (err, rows) => callback(err, rows));
+    db.all(sql, [userId], (err, rows) => callback(err, rows));
 }
 
 // Get a single notification by ID
 function getNotificationById(notifId, callback) {
-  const sql = `SELECT * FROM notifications WHERE notif_id = ?`;
-  db.get(sql, [notifId], (err, row) => callback(err, row || null));
+    const sql = `SELECT * FROM notifications WHERE notif_id = ?`;
+    db.get(sql, [notifId], (err, row) => callback(err, row || null));
 }
 
 // Create a notification (time defaults to now)
 function createNotification(userId, message, callback) {
-  const sql = `
+    const sql = `
     INSERT INTO notifications (user_id, time, message)
     VALUES (?, datetime('now'), ?)
   `;
-  db.run(sql, [userId, message], function (err) {
-    if (err) return callback(err);
-    callback(null, { notif_id: this.lastID });
-  });
+    db.run(sql, [userId, message], function (err) {
+        if (err) return callback(err);
+        callback(null, { notif_id: this.lastID });
+    });
 }
 
 // Delete a notification
 function deleteNotification(notifId, callback) {
-  const sql = `DELETE FROM notifications WHERE notif_id = ?`;
-  db.run(sql, [notifId], function (err) {
-    if (err) return callback(err);
-    callback(null, { changes: this?.changes });
-  });
+    const sql = `DELETE FROM notifications WHERE notif_id = ?`;
+    db.run(sql, [notifId], function (err) {
+        if (err) return callback(err);
+        callback(null, { changes: this?.changes });
+    });
 }
 // updated sql query
 function cancelAppointmentUpdated(apptId, callback) {
-  // First query: reopen the slot in appointments table
-  const sql1 = `
+    // First query: reopen the slot in appointments table
+    const sql1 = `
     UPDATE appointments
     SET user_id = NULL,
         is_booked = 0,
@@ -235,23 +234,23 @@ function cancelAppointmentUpdated(apptId, callback) {
     WHERE appt_id = ?
   `;
 
-  // Second query: add an entry to the notification table
-  const sql2 = `
+    // Second query: add an entry to the notification table
+    const sql2 = `
     INSERT INTO notifications (user_id, time, message)
     SELECT provider_id, start_time, 'Appointment was cancelled and slot reopened.'
     FROM appointments
     WHERE appt_id = ?
   `;
 
-  db.serialize(() => {
-    db.run(sql1, [apptId], function (err) {
-      if (err) return callback(err);
-      // insert notification only if update succeeded
-      db.run(sql2, [apptId], function (err2) {
-        callback(err2, { changes: this?.changes });
-      });
+    db.serialize(() => {
+        db.run(sql1, [apptId], function (err) {
+            if (err) return callback(err);
+            // insert notification only if update succeeded
+            db.run(sql2, [apptId], function (err2) {
+                callback(err2, { changes: this?.changes });
+            });
+        });
     });
-  });
 }
 
 module.exports = {
@@ -270,5 +269,5 @@ module.exports = {
     getNotificationById,
     createNotification,
     deleteNotification,
-    cancelAppointmentUpdated
+    cancelAppointmentUpdated,
 };
