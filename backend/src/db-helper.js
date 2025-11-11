@@ -152,6 +152,7 @@ function getAppointmentByDetails(providerId, startTime, endTime, roomId, callbac
     });
 }
 
+//Made adjustment to also pull user info of bookee?
 function getAppointmentsForList(callback) {
     const sql = `
     SELECT
@@ -163,6 +164,7 @@ function getAppointmentsForList(callback) {
       rooms.room_num            AS room_num,
       appointments.status       AS status,
       appointments.is_booked    AS is_booked,
+      appointments.user_id      AS user_id,
       appointments.start_time   AS start_time,
       appointments.end_time     AS end_time,
       appointments.date         AS date,

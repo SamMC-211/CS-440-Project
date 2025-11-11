@@ -80,7 +80,7 @@ db.serialize(() => {
             start_time TEXT NOT NULL,
             end_time TEXT NOT NULL,
             is_booked INTEGER NOT NULL DEFAULT 0,
-            user_id INTEGER,
+            user_id INTEGER NULL,
             room_id INTEGER NOT NULL,
             appt_type TEXT,
             description TEXT,

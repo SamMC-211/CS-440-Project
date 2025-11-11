@@ -56,6 +56,7 @@ function UserHome() {
         room_num: number;
         status: string;
         is_booked: number;
+        user_id: number | null;
         start_time: string;
         end_time: string;
         date: string;
@@ -71,15 +72,26 @@ function UserHome() {
     const [currentToggleButtons, setCurrentToggleButtons] = useState<string[]>([]);
     const [toggleButton, setToggleButton] = useState(0);
     //-------------------ACTIVE USER DATA-------------------
-    const initialUser = {
-        userID: '',
+
+    type User = {
+        userID: number | null;
+        firstName: string;
+        lastName: string;
+        role: string;
+        email: string;
+        providerName: string;
+    };
+
+    const currentUser: User = {
+        userID: null,
         firstName: '',
         lastName: '',
         role: '',
         email: '',
         providerName: '',
     };
-    const [user, setUser] = useState(initialUser);
+
+    const [user, setUser] = useState(currentUser);
     const initialAppointment = {
         title: '',
         type: '',
@@ -113,6 +125,8 @@ function UserHome() {
         { field: 'email', headerName: 'Email', flex: 1 },
         { field: 'password', headerName: 'Password', flex: 1 },
     ];
+
+    const [filter, setFilter] = useState('');
 
     //======================================UseEffect===========================================================
     //If user is admin, pull list of users
@@ -200,7 +214,7 @@ function UserHome() {
 
             if (data.ok) {
                 // Successful logout
-                setUser(initialUser); // clear user state
+                setUser(currentUser); // clear user state
                 navigate('/login'); // redirect to login page (using react-router)
             } else {
                 // Logout failed
@@ -338,7 +352,7 @@ function UserHome() {
             console.log('here');
 
             const query = new URLSearchParams({
-                userID: user.userID,
+                userID: user.userID?.toString() ?? '',
                 minDate: minDate ?? appointmentRange.afterDate,
                 maxDate: maxDate ?? appointmentRange.beforeDate,
                 type: type ?? appointmentSearchType,
@@ -541,38 +555,123 @@ function UserHome() {
                                 </span>
                             )}
                             {toggleButton == 2 && (
-                                <TableContainer component={Paper}>
-                                    <Table sx={{ minWidth: 650 }} aria-label='simple table'>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>Appointment ID</TableCell>
-                                                <TableCell align='right'>Provider</TableCell>
-                                                <TableCell align='right'>Type</TableCell>
-                                                <TableCell align='right'>Room</TableCell>
-                                                <TableCell align='right'>Date</TableCell>
-                                                <TableCell align='right'>Start Time</TableCell>
-                                                <TableCell align='right'>End Time</TableCell>
-                                                <TableCell align='right'>Status</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {appointmentList.map((appointment) => (
-                                                <TableRow key={appointment.appt_id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                                    <TableCell component='th' scope='appointment'>
-                                                        {appointment.appt_id}
-                                                    </TableCell>
-                                                    <TableCell align='right'>{appointment.provider_name}</TableCell>
-                                                    <TableCell align='right'>{appointment.appt_type}</TableCell>
-                                                    <TableCell align='right'>{appointment.room_num}</TableCell>
-                                                    <TableCell align='right'>{appointment.date}</TableCell>
-                                                    <TableCell align='right'>{appointment.start_time}</TableCell>
-                                                    <TableCell align='right'>{appointment.end_time}</TableCell>
-                                                    <TableCell align='right'>{appointment.status}</TableCell>
+                                <>
+                                    <Box display={'flex'}>
+                                        <Box flexGrow={1} />
+                                        <TextField
+                                            select
+                                            label='Sort By'
+                                            value={filter}
+                                            onChange={(e) => setFilter(e.target.value)}
+                                            variant='filled'
+                                            SelectProps={{ native: true }}
+                                            sx={{
+                                                '& .MuiFilledInput-root': {
+                                                    backgroundColor: (theme) => theme.palette.primary.main,
+                                                    color: 'white',
+                                                    borderRadius: 1, // matches Button's default rounding
+                                                    fontWeight: 'bold',
+                                                    '&:hover': {
+                                                        backgroundColor: (theme) => theme.palette.primary.dark,
+                                                    },
+                                                    '&.Mui-focused': {
+                                                        backgroundColor: (theme) => theme.palette.primary.dark,
+                                                    },
+                                                },
+                                                '& .MuiInputLabel-root': {
+                                                    color: 'white',
+                                                    fontWeight: 'bold',
+                                                },
+                                                '& .MuiInputBase-input': {
+                                                    color: 'black',
+                                                },
+                                                margin: '4px',
+                                                width: '25%',
+                                            }}
+                                        >
+                                            <option value=''></option>
+                                            <option value='101'>Provider</option>
+                                            <option value='102'>Booked</option>
+                                            <option value='103'>Date</option>
+                                        </TextField>
+                                    </Box>
+                                    <TableContainer component={Paper}>
+                                        <Table sx={{ minWidth: 650 }} aria-label='simple table'>
+                                            <TableHead
+                                                sx={{
+                                                    '& .MuiTableCell-head': {
+                                                        fontWeight: 'bold',
+                                                        fontSize: '1rem',
+                                                    },
+                                                }}
+                                            >
+                                                <TableRow>
+                                                    {/* <TableCell>Appointment ID</TableCell> */}
+                                                    <TableCell align='right'>Provider</TableCell>
+                                                    <TableCell align='right'>Type</TableCell>
+                                                    <TableCell align='right'>Room</TableCell>
+                                                    <TableCell align='right'>Date</TableCell>
+                                                    <TableCell align='right'>Start Time</TableCell>
+                                                    <TableCell align='right'>End Time</TableCell>
+                                                    <TableCell align='right'>Status</TableCell>
+                                                    <TableCell align='right'>Action</TableCell>
                                                 </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
+                                            </TableHead>
+                                            <TableBody>
+                                                {appointmentList.map((appointment) => (
+                                                    <TableRow key={appointment.appt_id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                                        {/* <TableCell component='th' scope='appointment'>
+                                                        {appointment.appt_id}
+                                                    </TableCell> */}
+                                                        <TableCell align='right'>{appointment.provider_name}</TableCell>
+                                                        <TableCell align='right'>{appointment.appt_type}</TableCell>
+                                                        <TableCell align='right'>{appointment.room_num}</TableCell>
+                                                        <TableCell align='right'>{appointment.date}</TableCell>
+                                                        <TableCell align='right'>{appointment.start_time}</TableCell>
+                                                        <TableCell align='right'>{appointment.end_time}</TableCell>
+
+                                                        {appointment.is_booked === 0 && appointment.user_id === undefined && (
+                                                            // appointment is open
+                                                            <>
+                                                                <TableCell align='right' sx={{ color: 'green' }}>
+                                                                    {appointment.status}
+                                                                </TableCell>
+                                                                <TableCell align='right'>
+                                                                    <Button variant='contained' size='medium' color='primary'>
+                                                                        Book
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </>
+                                                        )}
+                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id === currentUser.userID && (
+                                                            // appointment is booked by current user
+                                                            <>
+                                                                <TableCell align='right' sx={{ color: 'green' }}>
+                                                                    {appointment.status}
+                                                                </TableCell>
+                                                                <TableCell align='right'>
+                                                                    <Button variant='contained' size='medium' color='primary'>
+                                                                        Cancel
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </>
+                                                        )}
+                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== currentUser.userID && (
+                                                            //appointment is booked, but not by current user
+                                                            <>
+                                                                <TableCell align='right' sx={{ color: 'red' }}>
+                                                                    {appointment.status}
+                                                                </TableCell>
+                                                                <TableCell align='right'>{appointment.status}</TableCell>
+                                                            </>
+                                                        )}
+                                                        <span />
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                </>
                             )}
                         </Box>
                     )}
