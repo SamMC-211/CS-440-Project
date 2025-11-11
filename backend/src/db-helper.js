@@ -165,6 +165,7 @@ function getAppointmentsForList(callback) {
     const sql = `
     SELECT
       appointments.appt_id      AS appt_id,
+      appointments.provider_id  AS provider_id,
       p.provider_name       AS provider_name,
       p.first_name          AS provider_firstname,
       p.last_name           AS provider_lastname,

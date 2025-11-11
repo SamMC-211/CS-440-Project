@@ -36,17 +36,22 @@ import { format } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import SlotList from './components/AppointmentList';
+import AppointmentTable from './components/AppointmentTable';
 import CustomHeader from './components/CustomHeader';
 import DrawerButton from './components/DrawerButton';
+import Background from './components/Background';
 
 // TODO
 // Make snackbar into serarate component that you pass message/error to
 // Separate out forms into components to clean up code?
 // Cleanup admin data fetch (Only pull when they click on toggle button? have component be loading until fetch happens?)
 // Separate out filterable table into its own component (Use for viewing and possibly booking appointments?)(Takes an array of appointmentObjects (appointmentList))
+// add error popup option for more information (message: vs err: err.message) show full err.messsage
+// separate out snackbar into separate component
 //======================================Constants===========================================================
 type AppointmentObject = {
     appt_id: number;
+    provider_id: number;
     provider_name: string;
     provider_firstname: string;
     provider_lastname: string;
@@ -69,6 +74,13 @@ type User = {
     email: string;
     providerName: string;
 };
+
+type Notification = {
+    notif_id: number;
+    user_id: number;
+    time:string;
+    message: string;
+}
 
 //Toggle Button Names by User type
 const userToggleButtons = ['Dashboard', 'Book', 'View Appointments'];
@@ -110,6 +122,7 @@ function UserHome() {
 
     const [appointmentList, setAppointmentList] = useState<AppointmentObject[]>([]);
     const [bookedAppointmentList, setBookedAppointmentList] = useState();
+    const [notificationList, setNotificationList] = useState<Notification[]>([]);
 
     const [appointment, setAppointment] = useState(initialAppointment);
 
@@ -176,7 +189,8 @@ function UserHome() {
                         setCurrentToggleButtons(providerToggleButtons);
                     } else {
                         setCurrentToggleButtons(userToggleButtons);
-                        getBookedAppointments(data.user);
+                        getBookedAppointments(data.user as User);
+                        getUserNotifications(data.user as User );
                     }
                 } else {
                     setError('Failed to fetch user');
@@ -213,6 +227,37 @@ function UserHome() {
                 }
             })
             .catch((err) => console.error(err));
+    }
+
+    async function getUserNotifications(user: User) {
+        console.log('Get User Notifications For:' + user);
+        try {
+            const res = await fetch('api/notifications/user', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({userID: user.userID}),
+            });
+    
+            const data = await res.json();
+    
+            if (data.ok) {
+                setNotificationList(data.results);
+            } else {
+                setSnackbar({
+                    open: true,
+                    message: data.message,
+                    severity: 'error'
+                });
+            }
+        } catch (err) { 
+            console.log(err);
+            setSnackbar({
+                open: true,
+                message: 'Network error during notification fetch',
+                severity: 'error'
+            });
+        }
     }
 
     //======================================OnClick Functions===========================================================
@@ -401,7 +446,7 @@ function UserHome() {
         }
     }
 
-    async function cancelAppointment(appt: any) {
+    async function cancelAppointment(appt: AppointmentObject) {
         try {
             const res = await fetch('/api/appointments/cancel', {
                 method: 'POST',
@@ -418,7 +463,7 @@ function UserHome() {
             setSnackbar({
                 open: true,
                 message: 'Appointment Cancelled!',
-                severity: 'success',
+                severity: 'warning',
             });
         } catch (err) {
             setError('Network error');
@@ -429,7 +474,7 @@ function UserHome() {
         }
     }
 
-    async function getBookedAppointments(user: any) {
+    async function getBookedAppointments(user: User) {
         setError(null);
 
         //Tries a post request
@@ -439,7 +484,8 @@ function UserHome() {
         console.log('Calling getBookedAppointments with user:', user);
         try {
             const query = new URLSearchParams({
-                userID: (user.userID ?? user.user_id)?.toString() ?? '',
+                // TODO Verify this works
+                userID: (user.userID)?.toString() ?? '',
                 role: user.role,
             });
 
@@ -561,145 +607,75 @@ function UserHome() {
                     {user.role == 'user' && (
                         <Box>
                             {toggleButton == 0 && (
-                                // <Grid container spacing={6}>
-                                //     <Grid size={6}>
-                                //         <TextField
-                                //             select
-                                //             label='Type'
-                                //             value={appointmentSearchType}
-                                //             onChange={(e) => {
-                                //                 const newType = e.target.value;
-                                //                 setSearchAppointmentType(newType);
-                                //                 GetAppointmentsByDateRangeAndType(newType, null, null);
-                                //             }}
-                                //             fullWidth
-                                //             SelectProps={{
-                                //                 native: true,
-                                //             }}
-                                //             sx={{ p: 2, background: '#c1c3c5ff' }}
-                                //         >
-                                //             <option value=''></option>
-                                //             <option value='Consultation'>Consultation</option>
-                                //             <option value='Training'>Training</option>
-                                //             <option value='Follow-up'>Follow-up</option>
-                                //         </TextField>
-
-                                //         <Stack direction='row' spacing={2} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                //             <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                //                 <DatePicker
-                                //                     label='After'
-                                //                     value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
-                                //                     onChange={(newValue) => {
-                                //                         if (newValue) {
-                                //                             const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                //                             setAppointmentRange({
-                                //                                 ...appointmentRange,
-                                //                                 afterDate: formattedDate,
-                                //                             });
-                                //                             GetAppointmentsByDateRangeAndType(null, newValue, null);
-                                //                             // TODO: Call function to filter
-                                //                         }
-                                //                     }}
-                                //                     minDate={new Date()}
-                                //                 />
-                                //             </LocalizationProvider>
-
-                                //             <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                //                 <DatePicker
-                                //                     label='Before'
-                                //                     value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
-                                //                     onChange={(newValue) => {
-                                //                         if (newValue) {
-                                //                             const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                //                             setAppointmentRange({
-                                //                                 ...appointmentRange,
-                                //                                 beforeDate: formattedDate,
-                                //                             });
-                                //                             GetAppointmentsByDateRangeAndType(null, null, newValue);
-                                //                             // TODO: Call function to filter
-                                //                         }
-                                //                     }}
-                                //                     minDate={new Date()}
-                                //                 />
-                                //             </LocalizationProvider>
-                                //         </Stack>
-                                //         <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                //             <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
-                                //         </Paper>
-                                //     </Grid>
-                                //     <Grid size={6}>
-                                //         <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                //             {/* TODO: Dynamically update?? */}
-                                //             <SlotList appointments={appointmentList} onCancel={(appt) => cancelAppointment(appt)} listTitle='Upcoming Appointments' />
-                                //         </Paper>
-                                //     </Grid>
-                                // </Grid>
                                 <span>
                                     <Grid container spacing={6}>
                                         <Grid size={6}>
-                                            <TextField
-                                                select
-                                                label='Type'
-                                                value={appointmentSearchType}
-                                                onChange={(e) => {
-                                                    const newType = e.target.value;
-                                                    setSearchAppointmentType(newType);
-                                                    GetAppointmentsByDateRangeAndType(newType, null, null);
-                                                }}
-                                                fullWidth
-                                                SelectProps={{
-                                                    native: true,
-                                                }}
-                                                sx={{ p: 2, background: '#c1c3c5ff' }}
-                                            >
-                                                <option value=''></option>
-                                                <option value='Consultation'>Consultation</option>
-                                                <option value='Training'>Training</option>
-                                                <option value='Follow-up'>Follow-up</option>
-                                            </TextField>
+                                            <Box>
+                                                <CustomHeader text='Quick Booking' margin={6} variant='h4'/>
+                                                <TextField
+                                                    select
+                                                    label='Type'
+                                                    value={appointmentSearchType}
+                                                    onChange={(e) => {
+                                                        const newType = e.target.value;
+                                                        setSearchAppointmentType(newType);
+                                                        GetAppointmentsByDateRangeAndType(newType, null, null);
+                                                    }}
+                                                    fullWidth
+                                                    SelectProps={{
+                                                        native: true,
+                                                    }}
+                                                    sx={{ p: 2, background: '#c1c3c5ff' }}
+                                                >
+                                                    <option value=''></option>
+                                                    <option value='Consultation'>Consultation</option>
+                                                    <option value='Training'>Training</option>
+                                                    <option value='Follow-up'>Follow-up</option>
+                                                </TextField>
 
-                                            <Stack direction='row' spacing={2} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                    <DatePicker
-                                                        label='After'
-                                                        value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
-                                                        onChange={(newValue) => {
-                                                            if (newValue) {
-                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                                setAppointmentRange({
-                                                                    ...appointmentRange,
-                                                                    afterDate: formattedDate,
-                                                                });
-                                                                GetAppointmentsByDateRangeAndType(null, newValue, null);
-                                                                // TODO: Call function to filter
-                                                            }
-                                                        }}
-                                                        minDate={new Date()}
-                                                    />
-                                                </LocalizationProvider>
+                                                <Stack direction='row' spacing={2} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                        <DatePicker
+                                                            label='After'
+                                                            value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
+                                                            onChange={(newValue) => {
+                                                                if (newValue) {
+                                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                                    setAppointmentRange({
+                                                                        ...appointmentRange,
+                                                                        afterDate: formattedDate,
+                                                                    });
+                                                                    GetAppointmentsByDateRangeAndType(null, newValue, null);
+                                                                    // TODO: Call function to filter
+                                                                }
+                                                            }}
+                                                            minDate={new Date()}
+                                                        />
+                                                    </LocalizationProvider>
 
-                                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                    <DatePicker
-                                                        label='Before'
-                                                        value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
-                                                        onChange={(newValue) => {
-                                                            if (newValue) {
-                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                                setAppointmentRange({
-                                                                    ...appointmentRange,
-                                                                    beforeDate: formattedDate,
-                                                                });
-                                                                GetAppointmentsByDateRangeAndType(null, null, newValue);
-                                                                // TODO: Call function to filter
-                                                            }
-                                                        }}
-                                                        minDate={new Date()}
-                                                    />
-                                                </LocalizationProvider>
-                                            </Stack>
-                                            <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
-                                            </Paper>
+                                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                                        <DatePicker
+                                                            label='Before'
+                                                            value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
+                                                            onChange={(newValue) => {
+                                                                if (newValue) {
+                                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
+                                                                    setAppointmentRange({
+                                                                        ...appointmentRange,
+                                                                        beforeDate: formattedDate,
+                                                                    });
+                                                                    GetAppointmentsByDateRangeAndType(null, null, newValue);
+                                                                    // TODO: Call function to filter
+                                                                }
+                                                            }}
+                                                            minDate={new Date()}
+                                                        />
+                                                    </LocalizationProvider>
+                                                </Stack>
+                                                <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                                                    <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
+                                                </Paper>
+                                            </Box>
                                         </Grid>
                                         <Grid size={6}>
                                             <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
@@ -712,121 +688,7 @@ function UserHome() {
                             )}
                             {toggleButton == 2 && (
                                 <>
-                                    <Box display={'flex'}>
-                                        <Box flexGrow={1} />
-                                        <TextField
-                                            select
-                                            label='Sort By'
-                                            value={filter}
-                                            onChange={(e) => setFilter(e.target.value)}
-                                            variant='filled'
-                                            SelectProps={{ native: true }}
-                                            sx={{
-                                                '& .MuiFilledInput-root': {
-                                                    backgroundColor: (theme) => theme.palette.primary.main,
-                                                    color: 'white',
-                                                    borderRadius: 1, // matches Button's default rounding
-                                                    fontWeight: 'bold',
-                                                    '&:hover': {
-                                                        backgroundColor: (theme) => theme.palette.primary.dark,
-                                                    },
-                                                    '&.Mui-focused': {
-                                                        backgroundColor: (theme) => theme.palette.primary.dark,
-                                                    },
-                                                },
-                                                '& .MuiInputLabel-root': {
-                                                    color: 'white',
-                                                    fontWeight: 'bold',
-                                                },
-                                                '& .MuiInputBase-input': {
-                                                    color: 'black',
-                                                },
-                                                margin: '4px',
-                                                width: '25%',
-                                            }}
-                                        >
-                                            <option value=''></option>
-                                            <option value='101'>Provider</option>
-                                            <option value='102'>Booked</option>
-                                            <option value='103'>Date</option>
-                                        </TextField>
-                                    </Box>
-                                    <TableContainer component={Paper}>
-                                        <Table sx={{ minWidth: 650 }} aria-label='simple table'>
-                                            <TableHead
-                                                sx={{
-                                                    '& .MuiTableCell-head': {
-                                                        fontWeight: 'bold',
-                                                        fontSize: '1rem',
-                                                    },
-                                                }}
-                                            >
-                                                <TableRow>
-                                                    {/* <TableCell>Appointment ID</TableCell> */}
-                                                    <TableCell align='right'>Provider</TableCell>
-                                                    <TableCell align='right'>Type</TableCell>
-                                                    <TableCell align='right'>Room</TableCell>
-                                                    <TableCell align='right'>Date</TableCell>
-                                                    <TableCell align='right'>Start Time</TableCell>
-                                                    <TableCell align='right'>End Time</TableCell>
-                                                    <TableCell align='right'>Status</TableCell>
-                                                    <TableCell align='right'>Action</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {appointmentList.map((appointment) => (
-                                                    <TableRow key={appointment.appt_id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                                        {/* <TableCell component='th' scope='appointment'>
-                                                            {appointment.appt_id}
-                                                        </TableCell> */}
-                                                        <TableCell align='right'>{appointment.provider_name}</TableCell>
-                                                        <TableCell align='right'>{appointment.appt_type}</TableCell>
-                                                        <TableCell align='right'>{appointment.room_num}</TableCell>
-                                                        <TableCell align='right'>{appointment.date}</TableCell>
-                                                        <TableCell align='right'>{appointment.start_time}</TableCell>
-                                                        <TableCell align='right'>{appointment.end_time}</TableCell>
-
-                                                        {appointment.is_booked === 0 && (appointment.user_id === null || appointment.user_id === undefined) && (
-                                                            // appointment is open
-                                                            <>
-                                                                <TableCell align='right' sx={{ color: 'green' }}>
-                                                                    {appointment.status}
-                                                                </TableCell>
-                                                                <TableCell align='right'>
-                                                                    <Button variant='contained' size='medium' color='primary'>
-                                                                        Book
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </>
-                                                        )}
-                                                        {appointment.is_booked === 1 && (appointment.user_id !== null || appointment.user_id !== undefined) && appointment.user_id === user.userID && (
-                                                            // appointment is booked by current user
-                                                            <>
-                                                                <TableCell align='right' sx={{ color: 'green' }}>
-                                                                    {appointment.status}
-                                                                </TableCell>
-                                                                <TableCell align='right'>
-                                                                    <Button variant='contained' size='medium' color='primary'>
-                                                                        Cancel
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </>
-                                                        )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== user.userID && (
-                                                            //appointment is booked, but not by current user
-                                                            <>
-                                                                <TableCell align='right' sx={{ color: 'red' }}>
-                                                                    {appointment.status}
-                                                                </TableCell>
-                                                                <TableCell align='right'>{appointment.status}</TableCell>
-                                                            </>
-                                                        )}
-                                                        <span />
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
+                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)}/>
                                 </>
                             )}
                         </Box>
@@ -1056,121 +918,7 @@ function UserHome() {
                             )}
                             {toggleButton == 2 && (
                                 <>
-                                    <Box display={'flex'}>
-                                        <Box flexGrow={1} />
-                                        <TextField
-                                            select
-                                            label='Sort By'
-                                            value={filter}
-                                            onChange={(e) => setFilter(e.target.value)}
-                                            variant='filled'
-                                            SelectProps={{ native: true }}
-                                            sx={{
-                                                '& .MuiFilledInput-root': {
-                                                    backgroundColor: (theme) => theme.palette.primary.main,
-                                                    color: 'white',
-                                                    borderRadius: 1, // matches Button's default rounding
-                                                    fontWeight: 'bold',
-                                                    '&:hover': {
-                                                        backgroundColor: (theme) => theme.palette.primary.dark,
-                                                    },
-                                                    '&.Mui-focused': {
-                                                        backgroundColor: (theme) => theme.palette.primary.dark,
-                                                    },
-                                                },
-                                                '& .MuiInputLabel-root': {
-                                                    color: 'white',
-                                                    fontWeight: 'bold',
-                                                },
-                                                '& .MuiInputBase-input': {
-                                                    color: 'black',
-                                                },
-                                                margin: '4px',
-                                                width: '25%',
-                                            }}
-                                        >
-                                            <option value=''></option>
-                                            <option value='101'>Provider</option>
-                                            <option value='102'>Booked</option>
-                                            <option value='103'>Date</option>
-                                        </TextField>
-                                    </Box>
-                                    <TableContainer component={Paper}>
-                                        <Table sx={{ minWidth: 650 }} aria-label='simple table'>
-                                            <TableHead
-                                                sx={{
-                                                    '& .MuiTableCell-head': {
-                                                        fontWeight: 'bold',
-                                                        fontSize: '1rem',
-                                                    },
-                                                }}
-                                            >
-                                                <TableRow>
-                                                    {/* <TableCell>Appointment ID</TableCell> */}
-                                                    <TableCell align='right'>Provider</TableCell>
-                                                    <TableCell align='right'>Type</TableCell>
-                                                    <TableCell align='right'>Room</TableCell>
-                                                    <TableCell align='right'>Date</TableCell>
-                                                    <TableCell align='right'>Start Time</TableCell>
-                                                    <TableCell align='right'>End Time</TableCell>
-                                                    <TableCell align='right'>Status</TableCell>
-                                                    <TableCell align='right'>Action</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {appointmentList.map((appointment) => (
-                                                    <TableRow key={appointment.appt_id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                                        {/* <TableCell component='th' scope='appointment'>
-                                            {appointment.appt_id}
-                                        </TableCell> */}
-                                                        <TableCell align='right'>{appointment.provider_name}</TableCell>
-                                                        <TableCell align='right'>{appointment.appt_type}</TableCell>
-                                                        <TableCell align='right'>{appointment.room_num}</TableCell>
-                                                        <TableCell align='right'>{appointment.date}</TableCell>
-                                                        <TableCell align='right'>{appointment.start_time}</TableCell>
-                                                        <TableCell align='right'>{appointment.end_time}</TableCell>
-
-                                                        {appointment.is_booked === 0 && appointment.user_id === undefined && (
-                                                            // appointment is open
-                                                            <>
-                                                                <TableCell align='right' sx={{ color: 'green' }}>
-                                                                    {appointment.status}
-                                                                </TableCell>
-                                                                <TableCell align='right'>
-                                                                    <Button variant='contained' size='medium' color='primary'>
-                                                                        Book
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </>
-                                                        )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id === initialUser.userID && (
-                                                            // appointment is booked by current user
-                                                            <>
-                                                                <TableCell align='right' sx={{ color: 'green' }}>
-                                                                    {appointment.status}
-                                                                </TableCell>
-                                                                <TableCell align='right'>
-                                                                    <Button variant='contained' size='medium' color='primary'>
-                                                                        Cancel
-                                                                    </Button>
-                                                                </TableCell>
-                                                            </>
-                                                        )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== initialUser.userID && (
-                                                            //appointment is booked, but not by current user
-                                                            <>
-                                                                <TableCell align='right' sx={{ color: 'red' }}>
-                                                                    {appointment.status}
-                                                                </TableCell>
-                                                                <TableCell align='right'>{appointment.status}</TableCell>
-                                                            </>
-                                                        )}
-                                                        <span />
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
+                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)}/>
                                 </>
                             )}
                         </Box>

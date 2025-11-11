@@ -29,7 +29,7 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, on
     if (!appointments || appointments.length === 0) {
         return (
             <Paper elevation={3} sx={{ p: 2, mt: 4, margin: 'auto' }}>
-                <Typography>No appointments available.</Typography>
+                    <Typography>No upcoming appointments.</Typography>
             </Paper>
         );
     }

@@ -10,10 +10,24 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
-import { IconButton } from '@mui/material';
+import { Badge, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 
-export default function TemporaryDrawer() {
+type User = {
+    userID: number | null;
+    firstName: string;
+    lastName: string;
+    role: string;
+    email: string;
+    providerName: string;
+};
+
+type Props = {
+    user: User,
+}
+
+export default function TemporaryDrawer({user}: Props) {
     const [open, setOpen] = React.useState(false);
 
     const toggleDrawer = (newOpen: boolean) => () => {
@@ -49,7 +63,9 @@ export default function TemporaryDrawer() {
     return (
         <div>
             <IconButton size='large' edge='end' color='inherit' aria-label='menu' onClick={() => toggleDrawer(true)()}>
-                <MenuIcon />
+                <Badge badgeContent={10} color='secondary'>
+                    <NotificationsIcon />
+                </Badge>
             </IconButton>
             <Drawer open={open} onClose={toggleDrawer(false)}>
                 {DrawerList}

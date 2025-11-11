@@ -332,6 +332,18 @@ app.post('/api/appointments/cancel', (req, res) => {
         }
     });
 });
+// ================================Notifications=====================================================
+app.get('api/notifications/user', (req, res) => {
+    const {userID} = req.body;
+    dbhelper.getNotificationsByUser(userID, (err, results) => {
+        if (err) {
+            return res.status(500).json({ok: false, message: 'Error pulling user notifications', error: err.message });
+        } else {
+            return res.status(201).json({ ok: true, results});
+        }
+    })
+})
+
 // ================================Finalize=====================================================
 /* Optional: serve frontend in production
    Put your Vite build into /dist and serve it:
