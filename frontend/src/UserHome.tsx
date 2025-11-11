@@ -44,76 +44,82 @@ import DrawerButton from './components/DrawerButton';
 // Separate out forms into components to clean up code?
 // Cleanup admin data fetch (Only pull when they click on toggle button? have component be loading until fetch happens?)
 // Separate out filterable table into its own component (Use for viewing and possibly booking appointments?)(Takes an array of appointmentObjects (appointmentList))
+//======================================Constants===========================================================
+type AppointmentObject = {
+    appt_id: number;
+    provider_name: string;
+    provider_firstname: string;
+    provider_lastname: string;
+    appt_type: string;
+    room_num: number;
+    status: string;
+    is_booked: number;
+    user_id: number | null;
+    start_time: string;
+    end_time: string;
+    date: string;
+    title: string;
+    description: string;
+};
+type User = {
+    userID: number | null;
+    firstName: string;
+    lastName: string;
+    role: string;
+    email: string;
+    providerName: string;
+};
+
+//Toggle Button Names by User type
+const userToggleButtons = ['Dashboard', 'Book', 'View Appointments'];
+const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
+const adminToggleButtons = ['Dashboard', 'Manage', 'View Appointments'];
+
+const initialUser: User = {
+    userID: null,
+    firstName: '',
+    lastName: '',
+    role: '',
+    email: '',
+    providerName: '',
+};
+const initialAppointment = {
+    title: '',
+    type: '',
+    room: '',
+    time: '',
+    date: '',
+    description: '',
+};
+const initAppointmentRange = {
+    beforeDate: '',
+    afterDate: '',
+};
+const columns: GridColDef[] = [
+    { field: 'firstname', headerName: 'First Name', flex: 1 },
+    { field: 'lastname', headerName: ' Last Name', flex: 1 },
+    { field: 'email', headerName: 'Email', flex: 1 },
+    { field: 'password', headerName: 'Password', flex: 1 },
+];
 
 function UserHome() {
+    const [user, setUser] = useState(initialUser);
+    const [toggleButton, setToggleButton] = useState(0);
+    const [currentToggleButtons, setCurrentToggleButtons] = useState<string[]>([]);
+    const [filter, setFilter] = useState('');
+
+    const [appointmentList, setAppointmentList] = useState<AppointmentObject[]>([]);
     const [bookedAppointmentList, setBookedAppointmentList] = useState();
 
-    //======================================Constants===========================================================
-    type AppointmentObject = {
-        appt_id: number;
-        provider_name: string;
-        provider_firstname: string;
-        provider_lastname: string;
-        appt_type: string;
-        room_num: number;
-        status: string;
-        is_booked: number;
-        user_id: number | null;
-        start_time: string;
-        end_time: string;
-        date: string;
-        title: string;
-        description: string;
-    };
-    const [appointmentList, setAppointmentList] = useState<AppointmentObject[]>([]);
-
-    //Toggle Button Names by User type
-    const userToggleButtons = ['Dashboard', 'Book', 'View Appointments'];
-    const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
-    const adminToggleButtons = ['Dashboard', 'Manage', 'View Appointments'];
-    const [currentToggleButtons, setCurrentToggleButtons] = useState<string[]>([]);
-    const [toggleButton, setToggleButton] = useState(0);
-    //-------------------ACTIVE USER DATA-------------------
-
-    type User = {
-        userID: number | null;
-        firstName: string;
-        lastName: string;
-        role: string;
-        email: string;
-        providerName: string;
-    };
-
-    const currentUser: User = {
-        userID: null,
-        firstName: '',
-        lastName: '',
-        role: '',
-        email: '',
-        providerName: '',
-    };
-
-    const [user, setUser] = useState(currentUser);
-    const initialAppointment = {
-        title: '',
-        type: '',
-        room: '',
-        time: '',
-        date: '',
-        description: '',
-    };
     const [appointment, setAppointment] = useState(initialAppointment);
-    const initAppointmentRange = {
-        beforeDate: '',
-        afterDate: '',
-    };
+
     const [appointmentRange, setAppointmentRange] = useState(initAppointmentRange);
     const [appointmentSearchType, setSearchAppointmentType] = useState('');
-    const [loading, setLoading] = useState(false);
+
     const [rows, setRows] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    //Snackbar component
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -121,14 +127,6 @@ function UserHome() {
     });
     const handleClose = () => setSnackbar({ open: false, message: '', severity: 'success' });
     //User table definition
-    const columns: GridColDef[] = [
-        { field: 'firstname', headerName: 'First Name', flex: 1 },
-        { field: 'lastname', headerName: ' Last Name', flex: 1 },
-        { field: 'email', headerName: 'Email', flex: 1 },
-        { field: 'password', headerName: 'Password', flex: 1 },
-    ];
-
-    const [filter, setFilter] = useState('');
 
     //======================================UseEffect===========================================================
     //If user is admin, pull list of users
@@ -172,22 +170,38 @@ function UserHome() {
                         email: data.user.email,
                         providerName: data.user.provider_name,
                     });
-                    if (user.role === 'admin') {
+                    if (data.user.role === 'admin') {
                         setCurrentToggleButtons(adminToggleButtons);
-                    } else if (user.role === 'provider') {
+                    } else if (data.user.role === 'provider') {
                         setCurrentToggleButtons(providerToggleButtons);
                     } else {
                         setCurrentToggleButtons(userToggleButtons);
+                        getBookedAppointments(data.user);
                     }
                 } else {
                     setError('Failed to fetch user');
                 }
             })
             .catch((err) => console.error(err));
-    });
+        getAppointments();
+    }, []);
 
     //Grab all of the appointments from the database
-    useEffect(() => {
+    // useEffect(() => {
+    //     fetch('/api/appointments/all', { method: 'GET', credentials: 'include' })
+    //         .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
+    //         .then((data) => {
+    //             //data is whatever I passed to res.json on the express side
+    //             if (data.ok) {
+    //                 setAppointmentList(data.results as AppointmentObject[]);
+    //             } else {
+    //                 setError(data.message);
+    //             }
+    //         })
+    //         .catch((err) => console.error(err));
+    // }, [user]);
+
+    async function getAppointments() {
         fetch('/api/appointments/all', { method: 'GET', credentials: 'include' })
             .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
             .then((data) => {
@@ -199,7 +213,7 @@ function UserHome() {
                 }
             })
             .catch((err) => console.error(err));
-    }, [snackbar]);
+    }
 
     //======================================OnClick Functions===========================================================
 
@@ -216,7 +230,7 @@ function UserHome() {
 
             if (data.ok) {
                 // Successful logout
-                setUser(currentUser); // clear user state
+                setUser(initialUser); // clear user state
                 navigate('/login'); // redirect to login page (using react-router)
             } else {
                 // Logout failed
@@ -342,7 +356,8 @@ function UserHome() {
             console.log(err);
         } finally {
             setLoading(false);
-            getBookedAppointments();
+            getBookedAppointments(user);
+            getAppointments();
         }
     }
 
@@ -373,7 +388,6 @@ function UserHome() {
                 setError(data.message || 'Failed to get appointments.');
                 return;
             }
-            //Snackbar popup to inform user that their account was successfully registered
             if (data.ok) {
                 setAppointmentList(data.results);
             } else {
@@ -403,28 +417,29 @@ function UserHome() {
             //Snackbar popup to inform user that their account was successfully registered
             setSnackbar({
                 open: true,
-                message: 'Appointment Booked!',
+                message: 'Appointment Cancelled!',
                 severity: 'success',
             });
         } catch (err) {
             setError('Network error');
             console.log(err);
         } finally {
-            getBookedAppointments();
+            getBookedAppointments(user);
+            getAppointments();
         }
     }
 
-    async function getBookedAppointments() {
+    async function getBookedAppointments(user: any) {
         setError(null);
 
         //Tries a post request
         if (user.role != 'user') {
             return;
         }
-
+        console.log('Calling getBookedAppointments with user:', user);
         try {
             const query = new URLSearchParams({
-                userID: user.userID?.toString() ?? '',
+                userID: (user.userID ?? user.user_id)?.toString() ?? '',
                 role: user.role,
             });
 
@@ -434,12 +449,10 @@ function UserHome() {
             });
 
             const data = await res.json();
-
             if (!res.ok) {
                 setError(data.message || 'Failed to get appointments.');
                 return;
             }
-            //Snackbar popup to inform user that their account was successfully registered
             if (data.ok) {
                 setBookedAppointmentList(data.results);
             } else {
@@ -773,7 +786,7 @@ function UserHome() {
                                                         <TableCell align='right'>{appointment.start_time}</TableCell>
                                                         <TableCell align='right'>{appointment.end_time}</TableCell>
 
-                                                        {appointment.is_booked === 0 && appointment.user_id === undefined && (
+                                                        {appointment.is_booked === 0 && (appointment.user_id === null || appointment.user_id === undefined) && (
                                                             // appointment is open
                                                             <>
                                                                 <TableCell align='right' sx={{ color: 'green' }}>
@@ -786,7 +799,7 @@ function UserHome() {
                                                                 </TableCell>
                                                             </>
                                                         )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id === currentUser.userID && (
+                                                        {appointment.is_booked === 1 && (appointment.user_id !== null || appointment.user_id !== undefined) && appointment.user_id === user.userID && (
                                                             // appointment is booked by current user
                                                             <>
                                                                 <TableCell align='right' sx={{ color: 'green' }}>
@@ -799,7 +812,7 @@ function UserHome() {
                                                                 </TableCell>
                                                             </>
                                                         )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== currentUser.userID && (
+                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== user.userID && (
                                                             //appointment is booked, but not by current user
                                                             <>
                                                                 <TableCell align='right' sx={{ color: 'red' }}>
@@ -1130,7 +1143,7 @@ function UserHome() {
                                                                 </TableCell>
                                                             </>
                                                         )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id === currentUser.userID && (
+                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id === initialUser.userID && (
                                                             // appointment is booked by current user
                                                             <>
                                                                 <TableCell align='right' sx={{ color: 'green' }}>
@@ -1143,7 +1156,7 @@ function UserHome() {
                                                                 </TableCell>
                                                             </>
                                                         )}
-                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== currentUser.userID && (
+                                                        {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== initialUser.userID && (
                                                             //appointment is booked, but not by current user
                                                             <>
                                                                 <TableCell align='right' sx={{ color: 'red' }}>

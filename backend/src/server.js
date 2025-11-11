@@ -238,81 +238,77 @@ app.get('/api/appointments/all', (req, res) => {
 });
 
 app.get('/api/appointments', (req, res) => {
-  dbhelper.getAppointmentsForList((err, results) => {
-    if (err) {
-      return res
-        .status(500)
-        .json({ ok: false, message: 'Error retrieving appointments', error: err.message });
-    }
+    dbhelper.getAppointmentsForList((err, results) => {
+        if (err) {
+            return res.status(500).json({ ok: false, message: 'Error retrieving appointments', error: err.message });
+        }
 
-    try {
-      const { userID, minDate, maxDate, type, role } = req.query;
+        try {
+            const { userID, minDate, maxDate, type, role } = req.query;
 
-      // Parse date filters
-      const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : new Date();
-      const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
+            // Parse date filters
+            const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : new Date();
+            const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
 
-      // Convert result dates to Date objects for comparison
-     for(let i = 0; i < results.length; i++) {
-        results[i].date = StringToDate(results[i].date)
-     }
-      
-      // Apply filters
-      if (!isNullOrWhiteSpace(type)) {
-        results = results.filter(r => r.appt_type == type);
-      }
+            // Convert result dates to Date objects for comparison
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = StringToDate(results[i].date);
+            }
 
-      if (min) {
-        results = results.filter(r => r.date >= min);
-      }
+            // Apply filters
+            if (!isNullOrWhiteSpace(type)) {
+                results = results.filter((r) => r.appt_type == type);
+            }
 
-      if (max) {
-        results = results.filter(r => r.date <= max);
-      }
+            if (min) {
+                results = results.filter((r) => r.date >= min);
+            }
 
-      // Convert date back to string for response
-     for(let i = 0; i < results.length; i++) {
-        results[i].date = DateToString(results[i].date)
-     }
-      
-      return res.status(200).json({ ok: true, results });
-    } catch (e) {
-      return res
-        .status(500)
-        .json({ ok: false, message: 'Error processing appointment data', error: e.message });
-    }
-  });
+            if (max) {
+                results = results.filter((r) => r.date <= max);
+            }
+
+            // Convert date back to string for response
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = DateToString(results[i].date);
+            }
+
+            return res.status(200).json({ ok: true, results });
+        } catch (e) {
+            return res.status(500).json({ ok: false, message: 'Error processing appointment data', error: e.message });
+        }
+    });
 });
 
 app.get('/api/appointments/booked', (req, res) => {
-  dbhelper.getAppointmentsForList((err, results) => {
-    if (err) {
-      return res
-        .status(500)
-        .json({ ok: false, message: 'Error retrieving appointments', error: err.message });
-    }
+    dbhelper.getAppointmentsForList((err, results) => {
+        if (err) {
+            return res.status(500).json({ ok: false, message: 'Error retrieving appointments', error: err.message });
+        }
 
-    try {
-      const { userID } = req.query;
+        try {
+            const { userID } = req.query;
+            console.log('[DEBUG] Query parameters:', req.query);
 
-      // Convert result dates to Date objects for comparison
-     for(let i = 0; i < results.length; i++) {
-        results[i].date = StringToDate(results[i].date)
-     }
-     console.log("results", results)
-     results = results.filter(r => r.date >= new Date() && r.user_id == userID);
-      // Convert date back to string for response
-     for(let i = 0; i < results.length; i++) {
-        results[i].date = DateToString(results[i].date)
-     }
-      
-      return res.status(200).json({ ok: true, results });
-    } catch (e) {
-      return res
-        .status(500)
-        .json({ ok: false, message: 'Error processing appointment data', error: e.message });
-    }
-  });
+            const userIdNum = Number(userID);
+            console.log('[DEBUG] Parsed userID as number:', userIdNum);
+
+            // Convert result dates to Date objects for comparison
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = StringToDate(results[i].date);
+            }
+            results = results.filter((r) => r.date >= new Date() && r.user_id === userIdNum);
+            // Convert date back to string for response
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = DateToString(results[i].date);
+            }
+            console.log('Booked Results (Post Filter/Conversion):', results);
+
+            return res.status(200).json({ ok: true, results });
+        } catch (e) {
+            return res.status(500).json({ ok: false, message: 'Error processing appointment data', error: e.message });
+        }
+    });
 });
 
 app.post('/api/appointments/book', (req, res) => {
