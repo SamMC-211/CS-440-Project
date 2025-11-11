@@ -72,25 +72,31 @@ function bookAppointment(apptId, userId, callback) {
     const getApptSql = 'SELECT * FROM appointments WHERE appt_id = ?';
 
     db.get(getApptSql, [apptId], (err, appt) => {
-        if (err) return callback(err);
+        if (err) {
+          console.log("here", err)
+          return callback(err);
+        }
         if (!appt) return callback(new Error('Appointment not found.'));
         if (appt.is_booked || appt.status !== 'open') {
             return callback(new Error('This appointment slot is already booked.'));
         }
 
         // check if the user already has a conflicting appointment
-        const conflicSql = `
+        const conflictSql = `
 			SELECT * FROM appointments
 			WHERE user_id = ?
 			AND status = 'booked'
 			AND (
-				(start_time < ? AND end_time > ?) // overlapping window
+				(start_time < ? AND end_time > ?)
 				OR (start_time >= ? AND start_time < ?)
 			)
+      AND date = ?
 		`;
 
-        db.get(conflictSql, [userId, appt.end_time, appt.start_time, appt.start_time, appt.end_time], (err, conflict) => {
-            if (err) return callback(err);
+        db.get(conflictSql, [userId, appt.end_time, appt.start_time, appt.start_time, appt.end_time, appt.date], (err, conflict) => {
+            if (err){
+              return callback(err);
+            }
             if (conflict) {
                 return callback(new Error('User already has an appointment at this time.'));
             }
@@ -103,9 +109,11 @@ function bookAppointment(apptId, userId, callback) {
 			`;
 
             db.run(updateSql, [userId, apptId], function (err) {
-                if (err) return callback(err);
+                if (err) {
+                  return callback(err);
+                }
                 if (this.changes === 0) {
-                    return callback(new Error('Failed to book appointment (might already be booked).'));
+                  return callback(new Error('Failed to book appointment (might already be booked).'));
                 }
                 callback(null, { message: 'Appointment booked successfully', appt_id: apptId });
             });
@@ -156,10 +164,10 @@ function getAppointmentByDetails(providerId, startTime, endTime, roomId, callbac
 function getAppointmentsForList(callback) {
     const sql = `
     SELECT
-      appointments.appt_id       AS appt_id,
-      users.provider_name       AS provider_name,
-      users.first_name          AS provider_firstname,
-      users.last_name           AS provider_lastname,
+      appointments.appt_id      AS appt_id,
+      p.provider_name       AS provider_name,
+      p.first_name          AS provider_firstname,
+      p.last_name           AS provider_lastname,
       appointments.appt_type    AS appt_type,
       rooms.room_num            AS room_num,
       appointments.status       AS status,
@@ -169,13 +177,14 @@ function getAppointmentsForList(callback) {
       appointments.end_time     AS end_time,
       appointments.date         AS date,
       appointments.title        AS title,
-      appointments.description  AS description
+      appointments.description  AS description,
+      appointments.user_id      AS user_id
     FROM appointments
-    JOIN users   ON appointments.provider_id = users.user_id
+    JOIN users p  ON appointments.provider_id = p.user_id
+    LEFT JOIN users u ON appointments.user_id = u.user_id
     JOIN rooms   ON appointments.room_id     = rooms.room_id
     ORDER BY appointments.start_time ASC
   `;
-
     db.all(sql, [], (err, rows) => {
         callback(err, rows);
     });
