@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { List, ListSubheader, ListItem, ListItemText, Divider, Paper, Button, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Container, Grid, Stack, Alert } from '@mui/material';
+import { Alert, Box, Paper, Stack, TextField } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { format } from 'date-fns';
-import CustomHeader from './CustomHeader';
+import { useEffect, useState } from 'react';
 import SlotList from './AppointmentList';
+import CustomHeader from './CustomHeader';
 
 type AppointmentObject = {
     appt_id: number;
@@ -145,7 +145,6 @@ export default function QuickViewWindow({ user, onBook, initialAppointments, tit
                                                 afterDate: formattedDate,
                                             });
                                             GetAppointmentsByDateRangeAndType(null, newValue, null);
-                                            // TODO: Call function to filter
                                         }
                                     }}
                                     minDate={new Date()}

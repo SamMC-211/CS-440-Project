@@ -276,6 +276,7 @@ function UserHome() {
 
             if (data.ok) {
                 // Successful logout
+                setError(null);
                 setUser(initialUser); // clear user state
                 navigate('/login'); // redirect to login page (using react-router)
             } else {
@@ -342,6 +343,7 @@ function UserHome() {
             console.log(err);
         } finally {
             setLoading(false);
+            getAppointments();
         }
     }
 
@@ -581,7 +583,7 @@ function UserHome() {
                     Logout
                 </Button>
 
-                <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
+                <Container maxWidth={user.role === 'admin' ? false : 'lg'} sx={{ position: 'relative', zIndex: 1 }}>
                     {/* PROVIDER HEADER */}
                     {user.role === 'provider' && <CustomHeader text={user.providerName} margin={2} variant='h1' link={false} />}
                     {/* APP BAR */}
@@ -813,15 +815,18 @@ function UserHome() {
                         </Box>
                     )}
                     {/* Render Admin */}
-                    {user.role == 'dev' && ( //admin I guess
-                        <Grid container spacing={6}>
-                            <Grid size={12}>
-                                <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                    {/* TODO: Dynamically update?? */}
-                                    <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
-                                </Paper>
-                            </Grid>
-                        </Grid>
+                    {user.role == 'admin' && ( //admin I guess
+                        // <Grid container spacing={6}>
+                        //     <Grid size={12}>
+                        //         <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
+                        //             {/* TODO: Dynamically update?? */}
+                        //             <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
+                        //         </Paper>
+                        //     </Grid>
+                        // </Grid>
+                        <>
+                            <AppointmentTable appointments={appointmentList} user={user} variant='admin' />
+                        </>
                     )}
                 </Container>
 

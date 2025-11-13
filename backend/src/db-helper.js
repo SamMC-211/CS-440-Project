@@ -51,21 +51,6 @@ function createAppointment(providerId, title, startTime, endTime, roomId, apptTy
     });
 }
 
-// User books an appointment
-/*
-function bookAppointment(apptId, userId, callback) {
-    const sql = `
-		UPDATE appointments
-		SET user_id = ?, is_booked = 1, status = 'booked'
-		WHERE appt_id = ? AND status = 'open'
-	`;
-    //this.changes = number of rows effected
-    db.run(sql, [userId, apptId], function (err) {
-        callback(err, { changes: this?.changes });
-    });
-}
-*/
-
 // User books an appointment WITH conflict checks
 function bookAppointment(apptId, userId, callback) {
     // get the appointment slot details
@@ -143,6 +128,13 @@ function cancelAppointment(userID, apptId, callback) {
     `;
 
     const getApptProvIdSql = `SELECT provider_id FROM appointments WHERE appt_id = ?`;
+
+    const createNotifSql = `
+        INSERT INTO notifications (user_id, time, message)
+        SELECT provider_id, start_time, 'Appointment was cancelled and slot reopened.'
+        FROM appointments
+        WHERE appt_id = ?
+  `;
 
     //get caller role
     db.get(getRoleSql, [userID], function (err, row) {

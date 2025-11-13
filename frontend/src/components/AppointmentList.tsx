@@ -1,5 +1,5 @@
-import React from 'react';
-import { List, ListSubheader, ListItem, ListItemText, Divider, Paper, Button, Typography } from '@mui/material';
+import { Button, Divider, List, ListItem, ListItemText, ListSubheader, Paper, Typography } from '@mui/material';
+import React, { useMemo } from 'react';
 
 type Appointment = {
     date: string;
@@ -29,7 +29,7 @@ type User = {
 };
 
 type Props = {
-    appointments: Appointment[];
+    appointments?: Appointment[];
     user: User;
     onBook?: (appt: Appointment) => void;
     onCancel?: (appt: Appointment) => void;
@@ -37,17 +37,22 @@ type Props = {
     variant?: 'provider' | 'user' | 'admin' | '';
 };
 
-export default function SlotListSimple({ appointments, user, onBook, onCancel, listTitle = '', variant = '' }: Props) {
-    let visibleAppointments = appointments;
+export default function SlotListSimple({ appointments = [], user, onBook, onCancel, listTitle = '', variant = '' }: Props) {
+    const visibleAppointments = useMemo(() => {
+        // Work from a local copy, never mutate props
+        let list = Array.isArray(appointments) ? appointments : [];
 
-    // Provider Variant:
-    if (variant === 'provider') {
-        visibleAppointments = appointments.filter((a) => a.provider_id === user.userID);
-    }
+        // provider variant: only keep appointments for this provider
+        if (variant === 'provider') {
+            const providerUid = (user as any).userID ?? (user as any).user_id;
+            list = list.filter((a) => a.provider_id === providerUid);
+        }
 
-    // visibleAppointments = visibleAppointments.filter((a) => a.status !== 'cancelled'); // <-- exclude cancelled
+        // always exclude cancelled
+        return list.filter((a) => a.status !== 'cancelled');
+    }, [appointments, variant, user]);
 
-    if (!visibleAppointments || visibleAppointments.length === 0) {
+    if (!visibleAppointments.length) {
         return (
             <Paper elevation={3} sx={{ p: 2, mt: 4, margin: 'auto' }}>
                 <Typography>No upcoming appointments.</Typography>
