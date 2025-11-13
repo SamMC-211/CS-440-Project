@@ -56,8 +56,8 @@ export default function QuickViewWindow({ user, onBook, initialAppointments, tit
 
     //When to update list
     useEffect(() => {
-       GetAppointmentsByDateRangeAndType(null, null, null);
-    });
+        GetAppointmentsByDateRangeAndType(null, null, null);
+    }, [initialAppointments]);
 
     async function GetAppointmentsByDateRangeAndType(type: any = null, minDate: any = null, maxDate: any = null) {
         setError(null);

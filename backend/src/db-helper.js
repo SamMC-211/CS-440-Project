@@ -125,7 +125,7 @@ function cancelAppointment(userID, apptId, callback) {
 		WHERE appt_id = ?
     `;
 
-    const getApptSql = `SELECT appt_id, provider_id, user_id, is_booked, appt_name FROM appointments WHERE appt_id = ?`;
+    const getApptSql = `SELECT appt_id, provider_id, user_id, is_booked, title FROM appointments WHERE appt_id = ?`;
 
     // const getApptProvIdSql = `SELECT provider_id FROM appointments WHERE appt_id = ?`;
     // const getApptUsrIdSql = 'SELECT user_id FROM appointments WHERE appt_id = ?';
@@ -133,7 +133,7 @@ function cancelAppointment(userID, apptId, callback) {
     const createNotifSql = `
         INSERT INTO notifications (user_id, time, message)
         SELECT ?, datetime('now','localtime'),
-            'Appointment (' || appt_name || ') was cancelled by the provider.'
+            'Appointment (' || title || ') was cancelled by the provider.'
         FROM appointments
         WHERE appt_id = ?
     `;
@@ -174,7 +174,7 @@ function cancelAppointment(userID, apptId, callback) {
             }
 
             //perform update
-            db.run(cancelSql, [apptId], function (err3) {
+            db.run(sqlToRun, [apptId], function (err3) {
                 if (err3) return callback(err3);
 
                 // Check changes
@@ -344,7 +344,8 @@ function providerCancelAppointmentUpdated(apptId, callback) {
     });
 }
 
-function clearAllData() { //except rooms
+function clearAllData() {
+    //except rooms
     var sql = `
     DELETE FROM appointments;
 	`;
@@ -362,7 +363,7 @@ function clearAllData() { //except rooms
 }
 
 function createAdmin() {
-     const sql = `
+    const sql = `
 		INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
 		VALUES (?, ?, ?, ?, ?, ?, ?, 1)
 	`;
@@ -376,11 +377,10 @@ function insertPreviousDemoAppointments() {
 	`;
     // will need to change first value to id of Abby
     db.run(sql, ['6', 'Hair Highlight', '3:00', '4:00', '1', 'training', '10/15/2025', 'training']);
-    
+
     // will need to change first value to id of Katie
     db.run(sql, ['7', 'Face Moisterizer Treatment', '3:00', '4:00', '2', 'training', '10/15/2025']);
 }
-
 
 module.exports = {
     createUser,
