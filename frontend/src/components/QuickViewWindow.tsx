@@ -139,15 +139,14 @@ export default function QuickViewWindow({ user, onBook, initialAppointments, tit
                                     value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
                                     onChange={(newValue) => {
                                         if (newValue) {
-                                            const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                            setAppointmentRange({
-                                                ...appointmentRange,
-                                                afterDate: formattedDate,
-                                            });
-                                            GetAppointmentsByDateRangeAndType(null, newValue, null);
+                                            const formattedDate = format(newValue, 'MM/dd/yyyy'); // match backend
+                                            setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
+                                            GetAppointmentsByDateRangeAndType(null, formattedDate, null);
+                                        } else {
+                                            setAppointmentRange({ ...appointmentRange, afterDate: '' });
+                                            GetAppointmentsByDateRangeAndType(null, '', null);
                                         }
                                     }}
-                                    minDate={new Date()}
                                 />
                             </LocalizationProvider>
 
@@ -157,16 +156,14 @@ export default function QuickViewWindow({ user, onBook, initialAppointments, tit
                                     value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
                                     onChange={(newValue) => {
                                         if (newValue) {
-                                            const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                            setAppointmentRange({
-                                                ...appointmentRange,
-                                                beforeDate: formattedDate,
-                                            });
-                                            GetAppointmentsByDateRangeAndType(null, null, newValue);
-                                            // TODO: Call function to filter
+                                            const formattedDate = format(newValue, 'MM/dd/yyyy'); // match backend
+                                            setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
+                                            GetAppointmentsByDateRangeAndType(null, null, formattedDate);
+                                        } else {
+                                            setAppointmentRange({ ...appointmentRange, beforeDate: '' });
+                                            GetAppointmentsByDateRangeAndType(null, null, '');
                                         }
                                     }}
-                                    minDate={new Date()}
                                 />
                             </LocalizationProvider>
                         </Stack>

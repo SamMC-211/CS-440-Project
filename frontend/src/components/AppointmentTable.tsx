@@ -1,5 +1,10 @@
 import { Box, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
-import { useState } from 'react';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { format } from 'date-fns';
+import { useMemo, useState } from 'react';
+import Background from './Background';
 
 type Appointment = {
     appt_id: number;
@@ -38,12 +43,93 @@ type Props = {
 
 export default function AppointmentTableSimple({ appointments, user, onBook, onCancel, variant = '' }: Props) {
     const [filter, setFilter] = useState('');
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [dateString, setDateString] = useState<string>(''); // will hold "MM/dd/yyyy"
+
+    const visibleAppointments = useMemo(() => {
+        // if no date filter selected, start from all appointments
+        let list = Array.isArray(appointments) ? appointments : [];
+
+        // If you also want to apply your "filter" dropdown, do it here:
+        if (filter) {
+            if (filter === 'provider') {
+                // example: keep only provider rows (adapt to your real logic)
+                list = list.filter((a) => a.provider_name); // or other check
+            } else if (filter === 'booked') {
+                list = list.filter((a) => a.status === 'booked');
+            } else if (filter === 'cancelled') {
+                list = list.filter((a) => a.status === 'cancelled');
+            }
+        }
+
+        // If no date selected, return filtered-by-dropdown list
+        if (!dateString) return list;
+
+        // If appointment.date is already 'MM/dd/yyyy', compare directly:
+        return list.filter((a) => a.date === dateString);
+    }, [appointments, filter, dateString]);
 
     return (
         <>
-            <Container disableGutters maxWidth={variant === 'admin' ? false : 'md'}>
-                <Box display={'flex'}>
+            <Container disableGutters maxWidth={variant === 'admin' ? false : 'lg'}>
+                <Box display='flex' alignItems='center' sx={{ gap: 1, pr: 2 }}>
                     <Box flexGrow={1} />
+                    {/* Date picker on the left */}
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                            value={selectedDate} // Date | null
+                            onChange={(newDate) => {
+                                setSelectedDate(newDate);
+                                if (newDate) {
+                                    setDateString(format(newDate, 'MM/dd/yyyy')); // store formatted string
+                                } else {
+                                    setDateString('');
+                                }
+                            }}
+                            format='MM/dd/yyyy' // ensures the displayed string uses MM/dd/yyyy
+                            label='Date'
+                            sx={{
+                                backgroundColor: (theme) => theme.palette.primary.main,
+                                '& .MuiFilledInput-root': {
+                                    backgroundColor: (theme) => theme.palette.primary.main,
+                                    color: 'white',
+                                    borderRadius: 1,
+                                    fontWeight: 'bold',
+                                    '&:hover': {
+                                        backgroundColor: (theme) => theme.palette.primary.dark,
+                                    },
+                                    '&.Mui-focused': {
+                                        backgroundColor: (theme) => theme.palette.primary.dark,
+                                        color: 'white',
+                                    },
+                                },
+                                '& .MuiInputLabel-root': {
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                },
+                                '& .MuiPickersSectionList-root': {
+                                    color: 'white',
+                                },
+                                '& .MuiSvgIcon-root': {
+                                    color: 'white',
+                                },
+                            }}
+                        />
+                    </LocalizationProvider>
+
+                    {dateString && (
+                        <Button
+                            variant='contained'
+                            onClick={() => {
+                                setDateString('');
+                                setSelectedDate(null);
+                            }}
+                        >
+                            Clear Date
+                        </Button>
+                    )}
+
+                    {/* Existing dropdown to the right */}
                     <TextField
                         select
                         label='Sort By'
@@ -55,7 +141,7 @@ export default function AppointmentTableSimple({ appointments, user, onBook, onC
                             '& .MuiFilledInput-root': {
                                 backgroundColor: (theme) => theme.palette.primary.main,
                                 color: 'white',
-                                borderRadius: 1, // matches Button's default rounding
+                                borderRadius: 1,
                                 fontWeight: 'bold',
                                 '&:hover': {
                                     backgroundColor: (theme) => theme.palette.primary.dark,
@@ -71,14 +157,17 @@ export default function AppointmentTableSimple({ appointments, user, onBook, onC
                             '& .MuiInputBase-input': {
                                 color: 'black',
                             },
+                            '& .MuiSvgIcon-root': {
+                                color: 'white',
+                            },
                             margin: '8px',
-                            width: '25%',
+                            width: '220px', // width for dropdown
                         }}
                     >
                         <option value=''></option>
-                        <option value='101'>Provider</option>
-                        <option value='102'>Booked</option>
-                        <option value='103'>Date</option>
+                        <option value='provider'>Provider</option>
+                        <option value='booked'>Booked</option>
+                        <option value='cancelled'>Cancelled</option>
                     </TextField>
                 </Box>
                 <TableContainer component={Paper}>
@@ -112,7 +201,7 @@ export default function AppointmentTableSimple({ appointments, user, onBook, onC
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {appointments.map((appointment) => (
+                                {visibleAppointments.map((appointment) => (
                                     <TableRow
                                         key={appointment.appt_id}
                                         sx={{

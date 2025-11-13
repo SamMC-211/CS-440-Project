@@ -86,7 +86,7 @@ type Notification = {
 //Toggle Button Names by User type
 const userToggleButtons = ['Dashboard', 'Search Appointments'];
 const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
-const adminToggleButtons = ['Dashboard', 'Manage', 'View Appointments'];
+const adminToggleButtons = ['Admin View'];
 
 const initialUser: User = {
     userID: null,
@@ -578,6 +578,7 @@ function UserHome() {
                         height: 37,
                         top: 20,
                         right: 40,
+                        zIndex: 2,
                     }}
                 >
                     Logout
@@ -587,7 +588,7 @@ function UserHome() {
                     {/* PROVIDER HEADER */}
                     {user.role === 'provider' && <CustomHeader text={user.providerName} margin={2} variant='h1' link={false} />}
                     {/* APP BAR */}
-                    <Box sx={{ flexGrow: 1, marginTop: 5, marginBottom: 5 }}>
+                    <Box sx={{ flexGrow: 1, marginBottom: 5 }} marginTop={user.role === 'admin' ? 10 : 5}>
                         <AppBar position='static'>
                             <Toolbar>
                                 {/* Left side: profile avatar + name */}
@@ -816,14 +817,6 @@ function UserHome() {
                     )}
                     {/* Render Admin */}
                     {user.role == 'admin' && ( //admin I guess
-                        // <Grid container spacing={6}>
-                        //     <Grid size={12}>
-                        //         <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                        //             {/* TODO: Dynamically update?? */}
-                        //             <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
-                        //         </Paper>
-                        //     </Grid>
-                        // </Grid>
                         <>
                             <AppointmentTable appointments={appointmentList} user={user} variant='admin' />
                         </>

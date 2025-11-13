@@ -259,6 +259,8 @@ app.get('/api/appointments', (req, res) => {
             return res.status(500).json({ ok: false, message: 'Error retrieving appointments', error: err.message });
         }
 
+        console.log('Filter:' + results);
+
         try {
             const { userID, minDate, maxDate, type, role } = req.query;
 
@@ -340,6 +342,12 @@ app.post('/api/appointments/book', (req, res) => {
 
 app.post('/api/appointments/cancel', (req, res) => {
     const { userID, apptID } = req.body;
+
+    // Basic validation
+    if (userID == null || apptID == null) {
+        return res.status(400).json({ ok: false, message: 'Missing required fields: userID and apptID' });
+    }
+
     dbhelper.cancelAppointment(userID, apptID, (err, results) => {
         if (err) {
             return res.status(500).json({ ok: false, message: 'Error cancelling Appointments', error: err.message });

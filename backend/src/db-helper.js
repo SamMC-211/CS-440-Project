@@ -108,8 +108,6 @@ function bookAppointment(apptId, userId, callback) {
 
 // Cancel an appointment (make it open again)
 function cancelAppointment(userID, apptId, callback) {
-    let cancelSql;
-
     const getRoleSql = `
         SELECT role
         FROM users
@@ -127,54 +125,77 @@ function cancelAppointment(userID, apptId, callback) {
 		WHERE appt_id = ?
     `;
 
-    const getApptProvIdSql = `SELECT provider_id FROM appointments WHERE appt_id = ?`;
+    const getApptSql = `SELECT appt_id, provider_id, user_id, is_booked, appt_name FROM appointments WHERE appt_id = ?`;
+
+    // const getApptProvIdSql = `SELECT provider_id FROM appointments WHERE appt_id = ?`;
+    // const getApptUsrIdSql = 'SELECT user_id FROM appointments WHERE appt_id = ?';
 
     const createNotifSql = `
         INSERT INTO notifications (user_id, time, message)
-        SELECT provider_id, start_time, 'Appointment was cancelled and slot reopened.'
+        SELECT ?, datetime('now','localtime'),
+            'Appointment (' || appt_name || ') was cancelled by the provider.'
         FROM appointments
         WHERE appt_id = ?
-  `;
+    `;
 
     //get caller role
     db.get(getRoleSql, [userID], function (err, row) {
-        if (err) {
-            return callback(err);
-        }
-
-        if (!row || !row.role) {
-            return callback(new Error('Caller user not found or has no role'));
-        }
+        if (err) return callback(err);
+        if (!row || !row.role) return callback(new Error('Caller user not found or has no role'));
 
         //Capture user role
         const role = row.role;
 
-        //get appt provider id
-        db.get(getApptProvIdSql, [apptId], function (err2, apptRow) {
+        //get appt details
+        db.get(getApptSql, [apptId], function (err2, apptRow) {
             if (err2) return callback(err2);
-
-            if (!apptRow) {
-                return callback(new Error('Appointment not found'));
-            }
+            if (!apptRow) return callback(new Error('Appointment not found'));
 
             //Capture Appointment Provider ID
-            const appttUserId = apptRow.provider_id;
+            const appointmentProviderId = apptRow.provider_id;
+            const appointmentUserId = apptRow.user_id; // may be null
+            const isBooked = Number(apptRow.is_booked ?? 0) !== 0;
 
-            //Make decision
+            let sqlToRun;
+
             if (role === 'user') {
-                cancelSql = userCancelSql;
+                if (!isBooked) return callback(new Error('Appointment is not booked'));
+                if (Number(appointmentUserId) !== Number(userID)) {
+                    return callback(new Error('User is not the owner of this booking'));
+                }
+                sqlToRun = userCancelSql;
             } else if (role === 'provider') {
-                if (userID === appttUserId) {
-                    cancelSql = providerCancelSql;
-                } else {
+                if (Number(appointmentProviderId) !== Number(userID)) {
                     return callback(new Error('Provider not authorized to cancel this appointment'));
                 }
+                sqlToRun = providerCancelSql;
+            } else {
+                return callback(new Error('Role not allowed to cancel appointments'));
             }
 
-            //run update
+            //perform update
             db.run(cancelSql, [apptId], function (err3) {
                 if (err3) return callback(err3);
-                return callback(null, { changes: this?.changes });
+
+                // Check changes
+                if (!this || !this.changes || this.changes === 0) {
+                    return callback(new Error('No appointment was updated (maybe state already changed)'));
+                }
+
+                //If appointment appointment was booked and canceled by provider
+                if (appointmentUserId && role === 'provider') {
+                    db.run(createNotifSql, [appointmentUserId, apptId], function (err4) {
+                        if (err4) {
+                            // Notification failed — this is non-fatal for cancellation itself.
+                            return callback(null, { ok: true, changes: this.changes, notifError: err4.message });
+                        }
+                        console.log('Notif Inserted:' + this.changes);
+                        return callback(null, { ok: true, changes: this.changes });
+                    });
+                } else {
+                    // No notification necessary — return success
+                    return callback(null, { ok: true, changes: this.changes });
+                }
             });
         });
     });
