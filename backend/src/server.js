@@ -45,12 +45,50 @@ app.use(
 // dbhelper.createRoom(101, () => {});
 // dbhelper.createRoom(102, () => {});
 // dbhelper.createRoom(103, () => {});
-// dbhelper.createUser('Sam', 'Christenson', 'sammc@gmail.com', 'password', 'admin', '', '', function (err) {
-//     console.log('Error' + err);
-// });
 // dbhelper.clearAllData();
+
+// dbhelper.createUser(
+//     'Sam',
+//     'Christenson',
+//     'sammc@gmail.com',
+//     'password',
+//     'admin',
+//     '',
+//     '',
+//     function (err) {
+//         console.log('Error' + err);
+//     }
+// );
+
+// const sqla = `
+//     INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
+// 		VALUES (?, ?, ?, ?, ?, ?, ?, 1)`;
+
+// db.run(sqla, [
+//     'Sam',
+//     'Christenson',
+//     'sammc@gmail.com',
+//     'password',
+//     'admin',
+//     '',
+//     '',
+// ]);
 // dbhelper.createAdmin();
-//dbhelper.insertPreviousDemoAppointments();
+// dbhelper.insertPreviousDemoAppointments();
+
+const sql = `
+        UPDATE appointments 
+        SET provider_id = 11
+        WHERE appt_id = 16
+	`;
+const sql2 = `
+        UPDATE appointments 
+        SET provider_id = 12
+        WHERE appt_id = 17
+	`;
+// will need to change first value to id of Abby
+// db.run(sql);
+// db.run(sql2);
 
 // ================================Login=====================================================
 
@@ -60,32 +98,48 @@ app.use(
 app.post('/api/login', (req, res) => {
     // Simulate load time
     const { email, password } = req.body || {}; //parse POST body into email and password
-    if (!email || !password) return res.status(400).json({ ok: false, message: 'Missing email or password' }); // If email or password not recieved, respond accordingly
+    if (!email || !password)
+        return res
+            .status(400)
+            .json({ ok: false, message: 'Missing email or password' }); // If email or password not recieved, respond accordingly
 
-    db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, row) => {
-        if (err) {
-            return res.status(500).json({ ok: false, message: 'Login Error', error: err.message });
-        }
+    db.get(
+        'SELECT * FROM users WHERE email = ? AND password = ?',
+        [email, password],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    message: 'Login Error',
+                    error: err.message,
+                });
+            }
 
-        if (!row) {
-            return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
-        }
+            if (!row) {
+                return res
+                    .status(401)
+                    .json({ ok: false, message: 'Invalid Credentials' });
+            }
 
-        if (row.password === password) {
-            req.session.user = { email: row.email }; //save user session, initializes session
-            console.log('Session just initialized:', req.session);
-            return res.json({ ok: true, user: req.session.user });
-        } else {
-            return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+            if (row.password === password) {
+                req.session.user = { email: row.email }; //save user session, initializes session
+                console.log('Session just initialized:', req.session);
+                return res.json({ ok: true, user: req.session.user });
+            } else {
+                return res
+                    .status(401)
+                    .json({ ok: false, message: 'Invalid Credentials' });
+            }
         }
-    });
+    );
 });
 
 // API: check current user (lets frontend check "am I logged in") (GET request from frontend)
 //Used by "RequireAuth"
 app.get('/api/me', (req, res) => {
     //Simulate loading
-    if (req.session && req.session.user) return res.json({ ok: true, user: req.session.user }); //if a session
+    if (req.session && req.session.user)
+        return res.json({ ok: true, user: req.session.user }); //if a session
     return res.status(401).json({ ok: false, message: 'Not authenticated' });
 });
 
@@ -93,7 +147,10 @@ app.get('/api/me', (req, res) => {
 app.post('/api/logout', (req, res) => {
     console.log('Destroying session:', req.session.user);
     req.session.destroy((err) => {
-        if (err) return res.status(500).json({ ok: false, message: 'Logout failed' });
+        if (err)
+            return res
+                .status(500)
+                .json({ ok: false, message: 'Logout failed' });
         res.clearCookie('connect.sid'); //clears cookie from browser
         console.log('Session destroyed:');
         return res.json({ ok: true }); //return ok
@@ -104,21 +161,35 @@ app.post('/api/logout', (req, res) => {
 //TODO: Hash pasword before storing
 app.post('/api/register', (req, res) => {
     //Simulate Load time
-    const { firstName, lastName, email, password, isProvider, providerName, qualifications } = req.body;
+    const {
+        firstName,
+        lastName,
+        email,
+        password,
+        isProvider,
+        providerName,
+        qualifications,
+    } = req.body;
 
     let role = isProvider ? 'provider' : 'user';
 
     // Basic input validation (avoid empty values)
     if (!firstName || !lastName || !email || !password) {
-        return res.status(400).json({ ok: false, message: 'All fields are required' });
+        return res
+            .status(400)
+            .json({ ok: false, message: 'All fields are required' });
     }
     //If user is a provider they must have a provider name
     if (role === 'provider' && !providerName) {
-        return res.status(400).json({ ok: false, message: 'Service Provider Name Required' });
+        return res
+            .status(400)
+            .json({ ok: false, message: 'Service Provider Name Required' });
     }
     //If user is not provider set providerName = null
     if (role === 'user' && providerName) {
-        return res.status(400).json({ ok: false, message: 'User Cannot Have a Provider Name ' });
+        return res
+            .status(400)
+            .json({ ok: false, message: 'User Cannot Have a Provider Name ' });
     }
 
     //Check that user with email does not already exist
@@ -136,13 +207,26 @@ app.post('/api/register', (req, res) => {
             });
         }
 
-        dbhelper.createUser(firstName, lastName, email, password, role, providerName, qualifications, (err, result) => {
-            if (err) {
-                return res.status(500).json({ ok: false, message: 'Registration Failed', error: err.message });
-            } else {
-                return res.status(201).json({ ok: true });
+        dbhelper.createUser(
+            firstName,
+            lastName,
+            email,
+            password,
+            role,
+            providerName,
+            qualifications,
+            (err, result) => {
+                if (err) {
+                    return res.status(500).json({
+                        ok: false,
+                        message: 'Registration Failed',
+                        error: err.message,
+                    });
+                } else {
+                    return res.status(201).json({ ok: true });
+                }
             }
-        });
+        );
     });
 });
 
@@ -159,9 +243,17 @@ app.get('/api/users', (req, res) => {
 
     db.all(sql, [limit], (err, rows) => {
         if (err) {
-            return res.status(500).json({ success: false, error: err.message, message: 'Fetch Users Failed' });
+            return res.status(500).json({
+                success: false,
+                error: err.message,
+                message: 'Fetch Users Failed',
+            });
         } else if (rows) {
-            return res.json({ success: true, results: rows, count: rows.length }); //Wrap rows in object, useful for including metadata
+            return res.json({
+                success: true,
+                results: rows,
+                count: rows.length,
+            }); //Wrap rows in object, useful for including metadata
             // return res.json(rows);
         }
     });
@@ -170,36 +262,54 @@ app.get('/api/users', (req, res) => {
 app.get('/api/users/active', (req, res) => {
     // Check if a session exists
     if (!req.session.user) {
-        return res.status(401).json({ ok: false, message: 'No active user found' });
+        return res
+            .status(401)
+            .json({ ok: false, message: 'No active user found' });
     }
 
     const userEmail = req.session.user.email;
 
     // Now you can query the DB for the rest of the user info
-    db.get('SELECT user_id, first_name, last_name, role, email, provider_name FROM users WHERE email = ?', [userEmail], (err, row) => {
-        if (err) {
-            return res.status(500).json({ ok: false, message: 'Error fetching active user', error: err.message });
-        }
+    db.get(
+        'SELECT user_id, first_name, last_name, role, email, provider_name FROM users WHERE email = ?',
+        [userEmail],
+        (err, row) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    message: 'Error fetching active user',
+                    error: err.message,
+                });
+            }
 
-        if (!row) {
-            return res.status(404).json({ ok: false, message: 'User not found' });
-        }
+            if (!row) {
+                return res
+                    .status(404)
+                    .json({ ok: false, message: 'User not found' });
+            }
 
-        return res.json({ ok: true, user: row });
-    });
+            return res.json({ ok: true, user: row });
+        }
+    );
 });
 
 // ================================Appointments=====================================================
 app.post('/api/appointments', (req, res) => {
-    const { userID, title, type, date, roomID, time, description, role } = req.body;
+    const { userID, title, type, date, roomID, time, description, role } =
+        req.body;
 
     if (role !== 'provider') {
-        return res.status(400).json({ ok: false, message: 'You must be a service provider to create appointments!' });
+        return res.status(400).json({
+            ok: false,
+            message: 'You must be a service provider to create appointments!',
+        });
     }
 
     // Basic input validation (avoid empty values)
     if (!title || !type || !roomID || !time || !description) {
-        return res.status(400).json({ ok: false, message: 'All fields are required' });
+        return res
+            .status(400)
+            .json({ ok: false, message: 'All fields are required' });
     }
 
     //Split time into start and end time
@@ -216,31 +326,57 @@ app.post('/api/appointments', (req, res) => {
     `;
 
     //Query for conflicting appointments
-    db.get(conflictSql, [roomID, date, times[0], times[1]], (err, conflictRow) => {
-        if (err) {
-            console.error('DB error checking conflicts:', err);
-            return res.status(500).json({ ok: false, message: 'Database error', error: err.message });
-        }
-
-        if (conflictRow) {
-            // Conflict found
-            return res.status(409).json({
-                ok: false,
-                message: 'Time slot conflict - appointment already exists for this room/date/time',
-                conflictApptId: conflictRow.appt_id,
-            });
-        }
-
-        //create appointment
-        dbhelper.createAppointment(userID, title, times[0], times[1], roomID, type, date, description, (err, result) => {
+    db.get(
+        conflictSql,
+        [roomID, date, times[0], times[1]],
+        (err, conflictRow) => {
             if (err) {
-                return res.status(500).json({ ok: false, message: 'Error creating appointment', error: err.message });
-            } else {
-                //if result exists then access .appt_id otherwise return entire "result"
-                return res.status(201).json({ ok: true, appt_id: result?.appt_id ?? result });
+                console.error('DB error checking conflicts:', err);
+                return res.status(500).json({
+                    ok: false,
+                    message: 'Database error',
+                    error: err.message,
+                });
             }
-        });
-    });
+
+            if (conflictRow) {
+                // Conflict found
+                return res.status(409).json({
+                    ok: false,
+                    message:
+                        'Time slot conflict - appointment already exists for this room/date/time',
+                    conflictApptId: conflictRow.appt_id,
+                });
+            }
+
+            //create appointment
+            dbhelper.createAppointment(
+                userID,
+                title,
+                times[0],
+                times[1],
+                roomID,
+                type,
+                date,
+                description,
+                (err, result) => {
+                    if (err) {
+                        return res.status(500).json({
+                            ok: false,
+                            message: 'Error creating appointment',
+                            error: err.message,
+                        });
+                    } else {
+                        //if result exists then access .appt_id otherwise return entire "result"
+                        return res.status(201).json({
+                            ok: true,
+                            appt_id: result?.appt_id ?? result,
+                        });
+                    }
+                }
+            );
+        }
+    );
 });
 
 //return list of all appointments
@@ -248,7 +384,11 @@ app.post('/api/appointments', (req, res) => {
 app.get('/api/appointments/all', (req, res) => {
     dbhelper.getAppointmentsForList((err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error retreiving Appointments', error: err.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error retreiving Appointments',
+                error: err.message,
+            });
         } else {
             return res.status(201).json({ ok: true, results: results });
         }
@@ -259,7 +399,11 @@ app.get('/api/appointments/all', (req, res) => {
 app.get('/api/appointments', (req, res) => {
     dbhelper.getAppointmentsForList((err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error retrieving appointments', error: err.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error retrieving appointments',
+                error: err.message,
+            });
         }
 
         console.log('Filter:' + results);
@@ -268,8 +412,12 @@ app.get('/api/appointments', (req, res) => {
             const { userID, minDate, maxDate, type, role } = req.query;
 
             // Parse date filters
-            const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : new Date();
-            const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
+            const min = !isNullOrWhiteSpace(minDate)
+                ? StringToDate(minDate)
+                : new Date();
+            const max = !isNullOrWhiteSpace(maxDate)
+                ? StringToDate(maxDate)
+                : null;
 
             // Convert result dates to Date objects for comparison
             for (let i = 0; i < results.length; i++) {
@@ -296,7 +444,11 @@ app.get('/api/appointments', (req, res) => {
 
             return res.status(200).json({ ok: true, results });
         } catch (e) {
-            return res.status(500).json({ ok: false, message: 'Error processing appointment data', error: e.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error processing appointment data',
+                error: e.message,
+            });
         }
     });
 });
@@ -304,7 +456,11 @@ app.get('/api/appointments', (req, res) => {
 app.get('/api/appointments/booked', (req, res) => {
     dbhelper.getAppointmentsForList((err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error retrieving appointments', error: err.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error retrieving appointments',
+                error: err.message,
+            });
         }
 
         try {
@@ -318,7 +474,9 @@ app.get('/api/appointments/booked', (req, res) => {
             for (let i = 0; i < results.length; i++) {
                 results[i].date = StringToDate(results[i].date);
             }
-            results = results.filter((r) => r.date >= new Date() && r.user_id === userIdNum);
+            results = results.filter(
+                (r) => r.date >= new Date() && r.user_id === userIdNum
+            );
             // Convert date back to string for response
             for (let i = 0; i < results.length; i++) {
                 results[i].date = DateToString(results[i].date);
@@ -327,7 +485,11 @@ app.get('/api/appointments/booked', (req, res) => {
 
             return res.status(200).json({ ok: true, results });
         } catch (e) {
-            return res.status(500).json({ ok: false, message: 'Error processing appointment data', error: e.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error processing appointment data',
+                error: e.message,
+            });
         }
     });
 });
@@ -336,9 +498,15 @@ app.post('/api/appointments/book', (req, res) => {
     const { userID, apptID } = req.body;
     dbhelper.bookAppointment(apptID, userID, (err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error booking Appointments', error: err.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error booking Appointments',
+                error: err.message,
+            });
         } else {
-            return res.status(201).json({ ok: true, message: 'Appointment Successfully Booked' });
+            return res
+                .status(201)
+                .json({ ok: true, message: 'Appointment Successfully Booked' });
         }
     });
 });
@@ -348,14 +516,24 @@ app.post('/api/appointments/cancel', (req, res) => {
 
     // Basic validation
     if (userID == null || apptID == null) {
-        return res.status(400).json({ ok: false, message: 'Missing required fields: userID and apptID' });
+        return res.status(400).json({
+            ok: false,
+            message: 'Missing required fields: userID and apptID',
+        });
     }
 
     dbhelper.cancelAppointment(userID, apptID, (err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error cancelling Appointments', error: err.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error cancelling Appointments',
+                error: err.message,
+            });
         } else {
-            return res.status(201).json({ ok: true, message: 'Appointment Successfully Canceled' });
+            return res.status(201).json({
+                ok: true,
+                message: 'Appointment Successfully Canceled',
+            });
         }
     });
 });
@@ -364,7 +542,11 @@ app.get('api/notifications/user', (req, res) => {
     const { userID } = req.body;
     dbhelper.getNotificationsByUser(userID, (err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error pulling user notifications', error: err.message });
+            return res.status(500).json({
+                ok: false,
+                message: 'Error pulling user notifications',
+                error: err.message,
+            });
         } else {
             return res.status(201).json({ ok: true, results });
         }
@@ -383,4 +565,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 //Spins up server on given port (can now hit "http://localhost:4000/api/login", "/api/me", "/api/logout")
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () =>
+    console.log(`Server running on http://localhost:${PORT}`)
+);
