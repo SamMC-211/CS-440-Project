@@ -56,12 +56,8 @@ export default function QuickViewWindow({ user, onBook, initialAppointments, tit
 
     //When to update list
     useEffect(() => {
-        if (appointmentSearchType === '' && initAppointmentRange.beforeDate === '' && initAppointmentRange.afterDate === '') {
-            setAppointmentList(initialAppointments);
-        } else {
-            GetAppointmentsByDateRangeAndType(null, null, null);
-        }
-    }, [initialAppointments]);
+       GetAppointmentsByDateRangeAndType(null, null, null);
+    });
 
     async function GetAppointmentsByDateRangeAndType(type: any = null, minDate: any = null, maxDate: any = null) {
         setError(null);
