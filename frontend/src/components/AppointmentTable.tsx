@@ -1,22 +1,5 @@
 import React, { useState } from 'react';
-import {
-    List,
-    ListSubheader,
-    ListItem,
-    ListItemText,
-    Divider,
-    Paper,
-    Button,
-    Typography,
-    Box,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TextField,
-} from '@mui/material';
+import { List, ListSubheader, ListItem, ListItemText, Divider, Paper, Button, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Container } from '@mui/material';
 
 type Appointment = {
     appt_id: number;
@@ -52,137 +35,112 @@ type Props = {
     onCancel?: (appt: Appointment) => void;
 };
 
-export default function AppointmentTableSimple({
-    appointments,
-    user,
-    onBook,
-    onCancel,
-}: Props) {
+export default function AppointmentTableSimple({ appointments, user, onBook, onCancel }: Props) {
     const [filter, setFilter] = useState('');
 
     return (
         <>
-            <Box display={'flex'}>
-                <Box flexGrow={1} />
-                <TextField
-                    select
-                    label="Sort By"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    variant="filled"
-                    SelectProps={{ native: true }}
-                    sx={{
-                        '& .MuiFilledInput-root': {
-                            backgroundColor: (theme) =>
-                                theme.palette.primary.main,
-                            color: 'white',
-                            borderRadius: 1, // matches Button's default rounding
-                            fontWeight: 'bold',
-                            '&:hover': {
-                                backgroundColor: (theme) =>
-                                    theme.palette.primary.dark,
-                            },
-                            '&.Mui-focused': {
-                                backgroundColor: (theme) =>
-                                    theme.palette.primary.dark,
-                            },
-                        },
-                        '& .MuiInputLabel-root': {
-                            color: 'white',
-                            fontWeight: 'bold',
-                        },
-                        '& .MuiInputBase-input': {
-                            color: 'black',
-                        },
-                        margin: '8px',
-                        width: '25%',
-                    }}
-                >
-                    <option value=""></option>
-                    <option value="101">Provider</option>
-                    <option value="102">Booked</option>
-                    <option value="103">Date</option>
-                </TextField>
-            </Box>
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                    <TableHead
+            <Container disableGutters>
+                <Box display={'flex'}>
+                    <Box flexGrow={1} />
+                    <TextField
+                        select
+                        label='Sort By'
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        variant='filled'
+                        SelectProps={{ native: true }}
                         sx={{
-                            '& .MuiTableCell-head': {
+                            '& .MuiFilledInput-root': {
+                                backgroundColor: (theme) => theme.palette.primary.main,
+                                color: 'white',
+                                borderRadius: 1, // matches Button's default rounding
                                 fontWeight: 'bold',
-                                fontSize: '1rem',
+                                '&:hover': {
+                                    backgroundColor: (theme) => theme.palette.primary.dark,
+                                },
+                                '&.Mui-focused': {
+                                    backgroundColor: (theme) => theme.palette.primary.dark,
+                                },
                             },
+                            '& .MuiInputLabel-root': {
+                                color: 'white',
+                                fontWeight: 'bold',
+                            },
+                            '& .MuiInputBase-input': {
+                                color: 'black',
+                            },
+                            margin: '8px',
+                            width: '25%',
                         }}
                     >
-                        <TableRow>
-                            {/* <TableCell>Appointment ID</TableCell> */}
-                            <TableCell align="right">Provider</TableCell>
-                            <TableCell align="right">Type</TableCell>
-                            <TableCell align="right">Room</TableCell>
-                            <TableCell align="right">Date</TableCell>
-                            <TableCell align="right">Start Time</TableCell>
-                            <TableCell align="right">End Time</TableCell>
-                            <TableCell align="right">Status</TableCell>
-                            <TableCell align="right">Action</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {appointments.map((appointment) => (
-                            <TableRow
-                                key={appointment.appt_id}
-                                sx={{
-                                    '&:last-child td, &:last-child th': {
-                                        border: 0,
-                                    },
-                                }}
-                            >
-                                {/* <TableCell component='th' scope='appointment'>
+                        <option value=''></option>
+                        <option value='101'>Provider</option>
+                        <option value='102'>Booked</option>
+                        <option value='103'>Date</option>
+                    </TextField>
+                </Box>
+                <TableContainer component={Paper}>
+                    <Table sx={{ minWidth: 650 }} aria-label='simple table'>
+                        <TableHead
+                            sx={{
+                                '& .MuiTableCell-head': {
+                                    fontWeight: 'bold',
+                                    fontSize: '1rem',
+                                },
+                            }}
+                        >
+                            <TableRow>
+                                {/* <TableCell>Appointment ID</TableCell> */}
+                                <TableCell align='right'>Provider</TableCell>
+                                <TableCell align='right'>Type</TableCell>
+                                <TableCell align='right'>Room</TableCell>
+                                <TableCell align='right'>Date</TableCell>
+                                <TableCell align='right'>Start Time</TableCell>
+                                <TableCell align='right'>End Time</TableCell>
+                                <TableCell align='right'>Status</TableCell>
+                                <TableCell align='right'>Action</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {appointments.map((appointment) => (
+                                <TableRow
+                                    key={appointment.appt_id}
+                                    sx={{
+                                        '&:last-child td, &:last-child th': {
+                                            border: 0,
+                                        },
+                                    }}
+                                >
+                                    {/* <TableCell component='th' scope='appointment'>
                                                             {appointment.appt_id}
                                                         </TableCell> */}
-                                <TableCell align="right">
-                                    {appointment.provider_name}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {appointment.appt_type}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {appointment.room_num}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {appointment.date}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {appointment.start_time}
-                                </TableCell>
-                                <TableCell align="right">
-                                    {appointment.end_time}
-                                </TableCell>
+                                    <TableCell align='right'>{appointment.provider_name}</TableCell>
+                                    <TableCell align='right'>{appointment.appt_type}</TableCell>
+                                    <TableCell align='right'>{appointment.room_num}</TableCell>
+                                    <TableCell align='right'>{appointment.date}</TableCell>
+                                    <TableCell align='right'>{appointment.start_time}</TableCell>
+                                    <TableCell align='right'>{appointment.end_time}</TableCell>
 
-                                {appointment.is_booked === 0 &&
-                                    (appointment.user_id === null ||
-                                        appointment.user_id === undefined) && (
+                                    {appointment.status === 'cancelled' && (
+                                        <>
+                                            <TableCell align='right' sx={{ color: 'red' }}>
+                                                Cancelled by Provider
+                                            </TableCell>
+                                            <TableCell align='right' />
+                                        </>
+                                    )}
+                                    {appointment.is_booked === 0 && (appointment.user_id === null || appointment.user_id === undefined) && (
                                         // appointment is open
                                         <>
                                             {/* USER STATUS/BUTTONS */}
                                             {user.role === 'user' && (
                                                 <>
-                                                    <TableCell
-                                                        align="right"
-                                                        sx={{ color: 'green' }}
-                                                    >
+                                                    <TableCell align='right' sx={{ color: 'green' }}>
                                                         Available
                                                     </TableCell>
-                                                    <TableCell align="right">
-                                                        <Button
-                                                            variant="contained"
-                                                            size="medium"
-                                                            color="primary"
-                                                            onClick={() =>
-                                                                onBook!(
-                                                                    appointment
-                                                                )
-                                                            }
-                                                        >
+                                                    <TableCell align='right'>
+                                                        <Button variant='contained' size='medium' color='primary' onClick={() => onBook!(appointment)}>
                                                             Book
                                                         </Button>
                                                     </TableCell>
@@ -191,23 +149,11 @@ export default function AppointmentTableSimple({
                                             {/* PROVIDER STATUS/BUTTONS */}
                                             {user.role === 'provider' && (
                                                 <>
-                                                    <TableCell
-                                                        align="right"
-                                                        sx={{ color: 'green' }}
-                                                    >
+                                                    <TableCell align='right' sx={{ color: 'green' }}>
                                                         Open
                                                     </TableCell>
-                                                    <TableCell align="right">
-                                                        <Button
-                                                            variant="contained"
-                                                            size="medium"
-                                                            color="primary"
-                                                            onClick={() =>
-                                                                onCancel!(
-                                                                    appointment
-                                                                )
-                                                            }
-                                                        >
+                                                    <TableCell align='right'>
+                                                        <Button variant='contained' size='medium' color='primary' onClick={() => onCancel!(appointment)}>
                                                             Cancel
                                                         </Button>
                                                     </TableCell>
@@ -215,93 +161,58 @@ export default function AppointmentTableSimple({
                                             )}
                                         </>
                                     )}
-                                {appointment.is_booked === 1 &&
-                                    (appointment.user_id !== null ||
-                                        appointment.user_id !== undefined) &&
-                                    appointment.user_id === user.userID && (
+                                    {appointment.is_booked === 1 && (appointment.user_id !== null || appointment.user_id !== undefined) && appointment.user_id === user.userID && (
                                         // appointment is booked by current user
                                         <>
-                                            <TableCell
-                                                align="right"
-                                                sx={{ color: 'green' }}
-                                            >
+                                            <TableCell align='right' sx={{ color: 'green' }}>
                                                 Booked by You
                                             </TableCell>
-                                            <TableCell align="right">
-                                                <Button
-                                                    variant="contained"
-                                                    size="medium"
-                                                    color="primary"
-                                                    onClick={() =>
-                                                        onCancel!(appointment)
-                                                    }
-                                                >
+                                            <TableCell align='right'>
+                                                <Button variant='contained' size='medium' color='primary' onClick={() => onCancel!(appointment)}>
                                                     Cancel
                                                 </Button>
                                             </TableCell>
                                         </>
                                     )}
-                                {appointment.is_booked === 1 &&
-                                    appointment.user_id !== null &&
-                                    appointment.user_id !== user.userID && (
+                                    {appointment.is_booked === 1 && appointment.user_id !== null && appointment.user_id !== user.userID && (
                                         //appointment is booked, but not by current user
                                         <>
                                             {user.role === 'user' && (
                                                 <>
-                                                    <TableCell
-                                                        align="right"
-                                                        sx={{ color: 'red' }}
-                                                    >
+                                                    <TableCell align='right' sx={{ color: 'red' }}>
                                                         Booked
                                                     </TableCell>
-                                                    <TableCell align="right">
-                                                        {/* {appointment.status} */}
-                                                    </TableCell>
+                                                    <TableCell align='right'>{/* {appointment.status} */}</TableCell>
                                                 </>
                                             )}
                                             {user.role === 'provider' && (
                                                 <>
-                                                    <TableCell
-                                                        align="right"
-                                                        sx={{ color: 'red' }}
-                                                    >
+                                                    <TableCell align='right' sx={{ color: 'red' }}>
                                                         Full
                                                     </TableCell>
 
                                                     {/* PROVIDER'S APPOINTMENT */}
-                                                    {user.userID ===
-                                                        appointment.provider_id && (
-                                                        <TableCell align="right">
-                                                            <Button
-                                                                variant="contained"
-                                                                size="medium"
-                                                                color="primary"
-                                                                onClick={() =>
-                                                                    onCancel!(
-                                                                        appointment
-                                                                    )
-                                                                }
-                                                            >
+                                                    {user.userID === appointment.provider_id && (
+                                                        <TableCell align='right'>
+                                                            <Button variant='contained' size='medium' color='primary' onClick={() => onCancel!(appointment)}>
                                                                 Cancel
                                                             </Button>
                                                         </TableCell>
                                                     )}
 
                                                     {/* NOT PROVIDER'S APPOINTMENT */}
-                                                    {user.userID !==
-                                                        appointment.provider_id && (
-                                                        <TableCell align="right"></TableCell>
-                                                    )}
+                                                    {user.userID !== appointment.provider_id && <TableCell align='right'></TableCell>}
                                                 </>
                                             )}
                                         </>
                                     )}
-                                <span />
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                                    <span />
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Container>
         </>
     );
 }

@@ -73,7 +73,7 @@ function Login() {
                 }}
             >
                 <Stack spacing={2} direction={'column'} alignItems={'center'}>
-                    <CustomHeader text='Schedule Fit' variant='h1' margin={30} />
+                    <CustomHeader text='Schedule Fit' variant='h1' margin={30} link={true} />
                     <Card sx={{ width: 350, padding: 2, zIndex: 1, position: 'relative' }}>
                         <CardContent>
                             <Typography variant='h5' component='div' textAlign='center' gutterBottom>

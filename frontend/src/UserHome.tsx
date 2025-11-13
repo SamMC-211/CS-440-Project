@@ -39,6 +39,7 @@ import SlotList from './components/AppointmentList';
 import AppointmentTable from './components/AppointmentTable';
 import CustomHeader from './components/CustomHeader';
 import DrawerButton from './components/DrawerButton';
+import QuickViewWindow from './components/QuickViewWindow';
 import Background from './components/Background';
 
 // TODO
@@ -78,12 +79,12 @@ type User = {
 type Notification = {
     notif_id: number;
     user_id: number;
-    time:string;
+    time: string;
     message: string;
-}
+};
 
 //Toggle Button Names by User type
-const userToggleButtons = ['Dashboard', 'Book', 'View Appointments'];
+const userToggleButtons = ['Dashboard', 'Search Appointments'];
 const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
 const adminToggleButtons = ['Dashboard', 'Manage', 'View Appointments'];
 
@@ -98,7 +99,7 @@ const initialUser: User = {
 const initialAppointment = {
     title: '',
     type: '',
-    room: '',
+    roomID: '',
     time: '',
     date: '',
     description: '',
@@ -189,8 +190,8 @@ function UserHome() {
                         setCurrentToggleButtons(providerToggleButtons);
                     } else {
                         setCurrentToggleButtons(userToggleButtons);
-                        getBookedAppointments(data.user as User);
-                        getUserNotifications(data.user as User );
+                        getBookedAppointments(data.user);
+                        // getUserNotifications(data.user as User);
                     }
                 } else {
                     setError('Failed to fetch user');
@@ -236,26 +237,26 @@ function UserHome() {
                 method: 'GET',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({userID: user.userID}),
+                body: JSON.stringify({ userID: user.userID }),
             });
-    
+
             const data = await res.json();
-    
+
             if (data.ok) {
                 setNotificationList(data.results);
             } else {
                 setSnackbar({
                     open: true,
                     message: data.message,
-                    severity: 'error'
+                    severity: 'error',
                 });
             }
-        } catch (err) { 
+        } catch (err) {
             console.log(err);
             setSnackbar({
                 open: true,
                 message: 'Network error during notification fetch',
-                severity: 'error'
+                severity: 'error',
             });
         }
     }
@@ -311,12 +312,6 @@ function UserHome() {
             return;
         }
 
-        //Confirm password matches
-        if (Object.values(appointment).some((value) => value === '')) {
-            setError('Please fill out all fields!');
-            return;
-        }
-
         //Now set loading to true
         setLoading(true);
 
@@ -336,7 +331,6 @@ function UserHome() {
                 setError(data.message || 'Appointment Creation Failed');
                 return;
             }
-            //Snackbar popup to inform user that their account was successfully registered
             setAppointment(initialAppointment);
             setSnackbar({
                 open: true,
@@ -456,7 +450,7 @@ function UserHome() {
             });
             const data = await res.json();
             if (!res.ok) {
-                setError(data.message || 'Appointment Booking Failed');
+                setError(data.message || 'Appointment Cancellation Failed');
                 return;
             }
             //Snackbar popup to inform user that their account was successfully registered
@@ -474,18 +468,29 @@ function UserHome() {
         }
     }
 
-    async function getBookedAppointments(user: User) {
+    async function getBookedAppointments(user: any) {
         setError(null);
+
+        console.log('Calling getBookedAppointments with user:', user);
 
         //Tries a post request
         if (user.role != 'user') {
+            setError('Unable to fetch Booked: Role != user');
+            console.log('Not user');
             return;
         }
+
+        if (!user.userID && !user.user_id) {
+            setError('Unable to fetch Booked: Null userID');
+            console.log('No id');
+            return;
+        }
+
         console.log('Calling getBookedAppointments with user:', user);
         try {
             const query = new URLSearchParams({
                 // TODO Verify this works
-                userID: (user.userID)?.toString() ?? '',
+                userID: (user.userID ?? user.user_id)?.toString() ?? '',
                 role: user.role,
             });
 
@@ -577,8 +582,8 @@ function UserHome() {
                 </Button>
 
                 <Container maxWidth='lg' sx={{ position: 'relative', zIndex: 1 }}>
-                    \{/* PROVIDER HEADER */}
-                    {user.role === 'provider' && <CustomHeader text={user.providerName} margin={2} variant='h1' />}
+                    {/* PROVIDER HEADER */}
+                    {user.role === 'provider' && <CustomHeader text={user.providerName} margin={2} variant='h1' link={false} />}
                     {/* APP BAR */}
                     <Box sx={{ flexGrow: 1, marginTop: 5, marginBottom: 5 }}>
                         <AppBar position='static'>
@@ -599,7 +604,7 @@ function UserHome() {
                                         </ToggleButton>
                                     ))}
                                 </ToggleButtonGroup>
-                                <DrawerButton />
+                                <DrawerButton user={user} />
                             </Toolbar>
                         </AppBar>
                     </Box>
@@ -610,164 +615,48 @@ function UserHome() {
                                 <span>
                                     <Grid container spacing={6}>
                                         <Grid size={6}>
-                                            <Box>
-                                                <CustomHeader text='Quick Booking' margin={6} variant='h4'/>
-                                                <TextField
-                                                    select
-                                                    label='Type'
-                                                    value={appointmentSearchType}
-                                                    onChange={(e) => {
-                                                        const newType = e.target.value;
-                                                        setSearchAppointmentType(newType);
-                                                        GetAppointmentsByDateRangeAndType(newType, null, null);
-                                                    }}
-                                                    fullWidth
-                                                    SelectProps={{
-                                                        native: true,
-                                                    }}
-                                                    sx={{ p: 2, background: '#c1c3c5ff' }}
-                                                >
-                                                    <option value=''></option>
-                                                    <option value='Consultation'>Consultation</option>
-                                                    <option value='Training'>Training</option>
-                                                    <option value='Follow-up'>Follow-up</option>
-                                                </TextField>
-
-                                                <Stack direction='row' spacing={2} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                        <DatePicker
-                                                            label='After'
-                                                            value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
-                                                            onChange={(newValue) => {
-                                                                if (newValue) {
-                                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                                    setAppointmentRange({
-                                                                        ...appointmentRange,
-                                                                        afterDate: formattedDate,
-                                                                    });
-                                                                    GetAppointmentsByDateRangeAndType(null, newValue, null);
-                                                                    // TODO: Call function to filter
-                                                                }
-                                                            }}
-                                                            minDate={new Date()}
-                                                        />
-                                                    </LocalizationProvider>
-
-                                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                        <DatePicker
-                                                            label='Before'
-                                                            value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
-                                                            onChange={(newValue) => {
-                                                                if (newValue) {
-                                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                                    setAppointmentRange({
-                                                                        ...appointmentRange,
-                                                                        beforeDate: formattedDate,
-                                                                    });
-                                                                    GetAppointmentsByDateRangeAndType(null, null, newValue);
-                                                                    // TODO: Call function to filter
-                                                                }
-                                                            }}
-                                                            minDate={new Date()}
-                                                        />
-                                                    </LocalizationProvider>
-                                                </Stack>
-                                                <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                    <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
-                                                </Paper>
-                                            </Box>
+                                            <QuickViewWindow user={user} onBook={(appt) => bookAppointment(appt)} initialAppointments={appointmentList} title='Quick Booking' />
                                         </Grid>
                                         <Grid size={6}>
                                             <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                {/* TODO: Dynamically update?? */}
-                                                <SlotList appointments={bookedAppointmentList} onCancel={(appt) => cancelAppointment(appt)} listTitle='Upcoming Appointments' />
+                                                {error && (
+                                                    <Alert severity='error' sx={{ mb: 2 }}>
+                                                        {error}
+                                                    </Alert>
+                                                )}
+                                                <SlotList user={user} appointments={bookedAppointmentList} onCancel={(appt) => cancelAppointment(appt)} listTitle='Upcoming Appointments' />
                                             </Paper>
                                         </Grid>
                                     </Grid>
                                 </span>
                             )}
-                            {toggleButton == 2 && (
+                            {toggleButton == 1 && (
                                 <>
-                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)}/>
+                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)} />
                                 </>
                             )}
                         </Box>
                     )}
                     {/* Render providers */}
                     {user.role == 'provider' && (
-                        <Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                             {toggleButton == 0 && (
                                 <span>
                                     <Grid container spacing={6}>
                                         <Grid size={6}>
-                                            <TextField
-                                                select
-                                                label='Type'
-                                                value={appointmentSearchType}
-                                                onChange={(e) => {
-                                                    const newType = e.target.value;
-                                                    setSearchAppointmentType(newType);
-                                                    GetAppointmentsByDateRangeAndType(newType, null, null);
-                                                }}
-                                                fullWidth
-                                                SelectProps={{
-                                                    native: true,
-                                                }}
-                                                sx={{ p: 2, background: '#c1c3c5ff' }}
-                                            >
-                                                <option value=''></option>
-                                                <option value='Consultation'>Consultation</option>
-                                                <option value='Training'>Training</option>
-                                                <option value='Follow-up'>Follow-up</option>
-                                            </TextField>
-
-                                            <Stack direction='row' spacing={2} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                    <DatePicker
-                                                        label='After'
-                                                        value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
-                                                        onChange={(newValue) => {
-                                                            if (newValue) {
-                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                                setAppointmentRange({
-                                                                    ...appointmentRange,
-                                                                    afterDate: formattedDate,
-                                                                });
-                                                                GetAppointmentsByDateRangeAndType(null, newValue, null);
-                                                                // TODO: Call function to filter
-                                                            }
-                                                        }}
-                                                        minDate={new Date()}
-                                                    />
-                                                </LocalizationProvider>
-
-                                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                    <DatePicker
-                                                        label='Before'
-                                                        value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
-                                                        onChange={(newValue) => {
-                                                            if (newValue) {
-                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // convert Date -> string
-                                                                setAppointmentRange({
-                                                                    ...appointmentRange,
-                                                                    beforeDate: formattedDate,
-                                                                });
-                                                                GetAppointmentsByDateRangeAndType(null, null, newValue);
-                                                                // TODO: Call function to filter
-                                                            }
-                                                        }}
-                                                        minDate={new Date()}
-                                                    />
-                                                </LocalizationProvider>
-                                            </Stack>
                                             <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                <SlotList appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
+                                                <Box sx={{ background: 'white' }}>
+                                                    <CustomHeader text='Quick View' margin={6} variant='h4' link={false} />
+                                                    <SlotList user={user} appointments={appointmentList} onBook={(appt) => bookAppointment(appt)} listTitle='Available Appointments' />
+                                                </Box>
                                             </Paper>
                                         </Grid>
                                         <Grid size={6}>
                                             <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
-                                                {/* TODO: Dynamically update?? */}
-                                                <DataGrid rows={rows} columns={columns} getRowId={getRowID} checkboxSelection disableRowSelectionOnClick />
+                                                <Box sx={{ background: 'white' }}>
+                                                    <CustomHeader text='Your Appointments' margin={6} variant='h4' link={false} />
+                                                    <SlotList user={user} appointments={appointmentList} onCancel={(appt) => cancelAppointment(appt)} listTitle='' variant='provider' />
+                                                </Box>
                                             </Paper>
                                         </Grid>
                                     </Grid>
@@ -775,7 +664,7 @@ function UserHome() {
                             )}
                             {/* CREATE APPOINTMENT */}
                             {toggleButton == 1 && (
-                                <span>
+                                <Box alignSelf={'center'}>
                                     <Card
                                         sx={{
                                             width: 650,
@@ -834,11 +723,11 @@ function UserHome() {
                                                     <TextField
                                                         select
                                                         label='Room'
-                                                        value={appointment.room}
+                                                        value={appointment.roomID}
                                                         onChange={(e) =>
                                                             setAppointment({
                                                                 ...appointment,
-                                                                room: e.target.value,
+                                                                roomID: e.target.value,
                                                             })
                                                         }
                                                         fullWidth
@@ -847,9 +736,9 @@ function UserHome() {
                                                         }}
                                                     >
                                                         <option value=''></option>
-                                                        <option value='101'>Room 101</option>
-                                                        <option value='102'>Room 102</option>
-                                                        <option value='103'>Room 103</option>
+                                                        <option value='1'>Room 101</option>
+                                                        <option value='2'>Room 102</option>
+                                                        <option value='3'>Room 103</option>
                                                     </TextField>
 
                                                     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -914,11 +803,11 @@ function UserHome() {
                                             </form>
                                         </CardContent>
                                     </Card>
-                                </span>
+                                </Box>
                             )}
                             {toggleButton == 2 && (
                                 <>
-                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)}/>
+                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)} />
                                 </>
                             )}
                         </Box>

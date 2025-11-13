@@ -73,8 +73,8 @@ function bookAppointment(apptId, userId, callback) {
 
     db.get(getApptSql, [apptId], (err, appt) => {
         if (err) {
-          console.log("here", err)
-          return callback(err);
+            console.log('here', err);
+            return callback(err);
         }
         if (!appt) return callback(new Error('Appointment not found.'));
         if (appt.is_booked || appt.status !== 'open') {
@@ -94,8 +94,8 @@ function bookAppointment(apptId, userId, callback) {
 		`;
 
         db.get(conflictSql, [userId, appt.end_time, appt.start_time, appt.start_time, appt.end_time, appt.date], (err, conflict) => {
-            if (err){
-              return callback(err);
+            if (err) {
+                return callback(err);
             }
             if (conflict) {
                 return callback(new Error('User already has an appointment at this time.'));
@@ -110,10 +110,10 @@ function bookAppointment(apptId, userId, callback) {
 
             db.run(updateSql, [userId, apptId], function (err) {
                 if (err) {
-                  return callback(err);
+                    return callback(err);
                 }
                 if (this.changes === 0) {
-                  return callback(new Error('Failed to book appointment (might already be booked).'));
+                    return callback(new Error('Failed to book appointment (might already be booked).'));
                 }
                 callback(null, { message: 'Appointment booked successfully', appt_id: apptId });
             });
@@ -122,14 +122,69 @@ function bookAppointment(apptId, userId, callback) {
 }
 
 // Cancel an appointment (make it open again)
-function cancelAppointment(apptId, callback) {
-    const sql = `
+function cancelAppointment(userID, apptId, callback) {
+    let cancelSql;
+
+    const getRoleSql = `
+        SELECT role
+        FROM users
+        WHERE user_id = ?
+    `;
+
+    const userCancelSql = `
 		UPDATE appointments
 		SET user_id = NULL, is_booked = 0, status = 'open'
 		WHERE appt_id = ?
 	`;
-    db.run(sql, [apptId], function (err) {
-        callback(err, { changes: this?.changes });
+    const providerCancelSql = `
+        UPDATE appointments
+		SET user_id = NULL, is_booked = 1, status = 'cancelled'
+		WHERE appt_id = ?
+    `;
+
+    const getApptProvIdSql = `SELECT provider_id FROM appointments WHERE appt_id = ?`;
+
+    //get caller role
+    db.get(getRoleSql, [userID], function (err, row) {
+        if (err) {
+            return callback(err);
+        }
+
+        if (!row || !row.role) {
+            return callback(new Error('Caller user not found or has no role'));
+        }
+
+        //Capture user role
+        const role = row.role;
+
+        //get appt provider id
+        db.get(getApptProvIdSql, [apptId], function (err2, apptRow) {
+            if (err2) return callback(err2);
+
+            if (!apptRow) {
+                return callback(new Error('Appointment not found'));
+            }
+
+            //Capture Appointment Provider ID
+            const appttUserId = apptRow.provider_id;
+
+            //Make decision
+            if (role === 'user') {
+                cancelSql = userCancelSql;
+            } else if (role === 'provider') {
+                if (userID === appttUserId) {
+                    cancelSql = providerCancelSql;
+                } else {
+                    return callback(new Error('Provider not authorized to cancel this appointment'));
+                }
+            }
+
+            //run update
+            db.run(cancelSql, [apptId], function (err3) {
+                if (err3) return callback(err3);
+                return callback(null, { changes: this?.changes });
+            });
+        });
     });
 }
 
@@ -184,7 +239,7 @@ function getAppointmentsForList(callback) {
     JOIN users p  ON appointments.provider_id = p.user_id
     LEFT JOIN users u ON appointments.user_id = u.user_id
     JOIN rooms   ON appointments.room_id     = rooms.room_id
-    ORDER BY appointments.start_time ASC
+    ORDER BY appointments.date DESC
   `;
     db.all(sql, [], (err, rows) => {
         callback(err, rows);
@@ -262,6 +317,17 @@ function cancelAppointmentUpdated(apptId, callback) {
                 callback(err2, { changes: this?.changes });
             });
         });
+    });
+}
+
+function providerCancelAppointmentUpdated(apptId, callback) {
+    const sql = `
+		UPDATE appointments
+		SET user_id = NULL, is_booked = 1, status = 'cancelled'
+		WHERE appt_id = ?
+	`;
+    db.run(sql, [apptId], function (err) {
+        callback(err, { changes: this?.changes });
     });
 }
 

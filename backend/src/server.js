@@ -53,28 +53,26 @@ app.use(
 //TODO: Check hashed password
 app.post('/api/login', (req, res) => {
     // Simulate load time
-    setTimeout(() => {
-        const { email, password } = req.body || {}; //parse POST body into email and password
-        if (!email || !password) return res.status(400).json({ ok: false, message: 'Missing email or password' }); // If email or password not recieved, respond accordingly
+    const { email, password } = req.body || {}; //parse POST body into email and password
+    if (!email || !password) return res.status(400).json({ ok: false, message: 'Missing email or password' }); // If email or password not recieved, respond accordingly
 
-        db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, row) => {
-            if (err) {
-                return res.status(500).json({ ok: false, message: 'Login Error', error: err.message });
-            }
+    db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, row) => {
+        if (err) {
+            return res.status(500).json({ ok: false, message: 'Login Error', error: err.message });
+        }
 
-            if (!row) {
-                return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
-            }
+        if (!row) {
+            return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+        }
 
-            if (row.password === password) {
-                req.session.user = { email: row.email }; //save user session, initializes session
-                console.log('Session just initialized:', req.session);
-                return res.json({ ok: true, user: req.session.user });
-            } else {
-                return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
-            }
-        });
-    }, 2000);
+        if (row.password === password) {
+            req.session.user = { email: row.email }; //save user session, initializes session
+            console.log('Session just initialized:', req.session);
+            return res.json({ ok: true, user: req.session.user });
+        } else {
+            return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+        }
+    });
 });
 
 // API: check current user (lets frontend check "am I logged in") (GET request from frontend)
@@ -187,36 +185,50 @@ app.get('/api/users/active', (req, res) => {
 
 // ================================Appointments=====================================================
 app.post('/api/appointments', (req, res) => {
-    const { userID, title, type, date, room, time, description, role } = req.body;
+    const { userID, title, type, date, roomID, time, description, role } = req.body;
 
     if (role !== 'provider') {
         return res.status(400).json({ ok: false, message: 'You must be a service provider to create appointments!' });
     }
 
     // Basic input validation (avoid empty values)
-    if (!title || !type || !room || !time || !description) {
+    if (!title || !type || !roomID || !time || !description) {
         return res.status(400).json({ ok: false, message: 'All fields are required' });
     }
 
     //Split time into start and end time
     const times = time.split('-');
-    const roomNum = parseInt(room); //to check if this room exists
 
-    //TODO: Check room availability during time slot within query
-    db.get('SELECT room_id FROM rooms WHERE room_num = ?', [roomNum], (err, row) => {
+    //SQL to check for conflicting appointments
+    const conflictSql = `
+      SELECT appt_id
+      FROM appointments
+      WHERE room_id = ?
+        AND date = ?
+        AND NOT (end_time <= ? OR start_time >= ?)
+      LIMIT 1
+    `;
+
+    //Query for conflicting appointments
+    db.get(conflictSql, [roomID, date, times[0], times[1]], (err, conflictRow) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error fetching room data', error: err.message });
-        }
-        if (!row) {
-            return res.status(404).json({ ok: false, message: 'Room not found' });
+            console.error('DB error checking conflicts:', err);
+            return res.status(500).json({ ok: false, message: 'Database error', error: err.message });
         }
 
-        //room exists then, get its id
-        const roomID = row.room_id;
+        if (conflictRow) {
+            // Conflict found
+            return res.status(409).json({
+                ok: false,
+                message: 'Time slot conflict - appointment already exists for this room/date/time',
+                conflictApptId: conflictRow.appt_id,
+            });
+        }
+
         //create appointment
         dbhelper.createAppointment(userID, title, times[0], times[1], roomID, type, date, description, (err, result) => {
             if (err) {
-                return res.status(500).json({ ok: false, message: 'Error inserting appointment', error: err.message });
+                return res.status(500).json({ ok: false, message: 'Error creating appointment', error: err.message });
             } else {
                 //if result exists then access .appt_id otherwise return entire "result"
                 return res.status(201).json({ ok: true, appt_id: result?.appt_id ?? result });
@@ -237,6 +249,7 @@ app.get('/api/appointments/all', (req, res) => {
     });
 });
 
+// CREATE APPOINTMENT
 app.get('/api/appointments', (req, res) => {
     dbhelper.getAppointmentsForList((err, results) => {
         if (err) {
@@ -324,25 +337,25 @@ app.post('/api/appointments/book', (req, res) => {
 
 app.post('/api/appointments/cancel', (req, res) => {
     const { userID, apptID } = req.body;
-    dbhelper.cancelAppointment(apptID, (err, results) => {
+    dbhelper.cancelAppointment(userID, apptID, (err, results) => {
         if (err) {
-            return res.status(500).json({ ok: false, message: 'Error booking Appointments', error: err.message });
+            return res.status(500).json({ ok: false, message: 'Error cancelling Appointments', error: err.message });
         } else {
-            return res.status(201).json({ ok: true, message: 'Appointment Successfully Booked' });
+            return res.status(201).json({ ok: true, message: 'Appointment Successfully Canceled' });
         }
     });
 });
 // ================================Notifications=====================================================
 app.get('api/notifications/user', (req, res) => {
-    const {userID} = req.body;
+    const { userID } = req.body;
     dbhelper.getNotificationsByUser(userID, (err, results) => {
         if (err) {
-            return res.status(500).json({ok: false, message: 'Error pulling user notifications', error: err.message });
+            return res.status(500).json({ ok: false, message: 'Error pulling user notifications', error: err.message });
         } else {
-            return res.status(201).json({ ok: true, results});
+            return res.status(201).json({ ok: true, results });
         }
-    })
-})
+    });
+});
 
 // ================================Finalize=====================================================
 /* Optional: serve frontend in production

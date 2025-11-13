@@ -5,37 +5,58 @@ type Appointment = {
     date: string;
     title: string;
     appt_id: number;
+    provider_id: number;
     provider_name: string;
     provider_firstname: string;
     provider_lastname: string;
     appt_type: string;
-    room_num: number | string;
+    room_num: number;
     status: string;
-    is_booked: number | boolean;
+    is_booked: number;
+    user_id: number | null;
     start_time: string;
     end_time: string;
     description: string;
 };
 
+type User = {
+    userID: number | null;
+    firstName: string;
+    lastName: string;
+    role: string;
+    email: string;
+    providerName: string;
+};
+
 type Props = {
     appointments: Appointment[];
-    role?: 'user' | 'provider';
+    user: User;
     onBook?: (appt: Appointment) => void;
     onCancel?: (appt: Appointment) => void;
     listTitle?: string;
+    variant?: 'provider' | 'user' | 'admin' | '';
 };
 
-export default function SlotListSimple({ appointments, role = 'user', onBook, onCancel, listTitle = 'Available Sessions' }: Props) {
-    if (!appointments || appointments.length === 0) {
+export default function SlotListSimple({ appointments, user, onBook, onCancel, listTitle = '', variant = '' }: Props) {
+    let visibleAppointments = appointments;
+
+    // Provider Variant:
+    if (variant === 'provider') {
+        visibleAppointments = appointments.filter((a) => a.provider_id === user.userID);
+    }
+
+    // visibleAppointments = visibleAppointments.filter((a) => a.status !== 'cancelled'); // <-- exclude cancelled
+
+    if (!visibleAppointments || visibleAppointments.length === 0) {
         return (
             <Paper elevation={3} sx={{ p: 2, mt: 4, margin: 'auto' }}>
-                    <Typography>No upcoming appointments.</Typography>
+                <Typography>No upcoming appointments.</Typography>
             </Paper>
         );
     }
 
     return (
-        <Paper elevation={3} sx={{ flexGrow: 1, margin: 'auto', mt: 4 }}>
+        <Paper elevation={3} sx={{ flexGrow: 1, margin: 'auto' }}>
             <List
                 sx={{ maxHeight: 480, overflow: 'auto' }}
                 subheader={
@@ -44,7 +65,7 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, on
                     </ListSubheader>
                 }
             >
-                {appointments.map((a, i) => {
+                {visibleAppointments.map((a, i) => {
                     const key = `${a.provider_name}-${a.start_time}-${i}`;
 
                     // Build the three lines exactly as requested
@@ -53,8 +74,11 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, on
                     const tertiary = `${a.date} | ${a.start_time} - ${a.end_time}`;
 
                     const booked = Number(a.is_booked ?? 0) !== 0;
-                    const showBook = role === 'user' && !booked && typeof onBook === 'function';
-                    const showCancel = role === 'user' && booked && typeof onCancel === 'function';
+                    const showBook = user.role === 'user' && !booked && typeof onBook === 'function';
+                    const showCancel = user.role === 'user' && booked && user.userID === a.user_id && typeof onCancel === 'function';
+                    const showProviderCancel = user.role === 'provider' && user.userID === a.provider_id && typeof onCancel === 'function';
+                    const showOpen = user.role === 'provider' && !booked;
+                    const showFull = user.role === 'provider' && booked;
 
                     return (
                         <React.Fragment key={key}>
@@ -65,14 +89,24 @@ export default function SlotListSimple({ appointments, role = 'user', onBook, on
                                         <Button variant='contained' size='small' onClick={() => onBook!(a)}>
                                             Book
                                         </Button>
-                                    ) 
-                                    : showCancel ? (
-                                         <Button variant='contained' size='small' onClick={() => onCancel!(a)}>
+                                    ) : showCancel ? (
+                                        <Button variant='contained' size='small' onClick={() => onCancel!(a)}>
                                             Cancel
                                         </Button>
-                                    )
-                                    : (
-                                        <Typography variant='body2' color='text.secondary' sx={{ minWidth: 72, textAlign: 'right' }}>
+                                    ) : showProviderCancel ? (
+                                        <Button variant='contained' size='small' onClick={() => onCancel!(a)}>
+                                            Cancel
+                                        </Button>
+                                    ) : showOpen ? (
+                                        <Typography variant='body2' color='green' sx={{ minWidth: 72, textAlign: 'right' }}>
+                                            Open
+                                        </Typography>
+                                    ) : showFull ? (
+                                        <Typography variant='body2' color='red' sx={{ minWidth: 72, textAlign: 'right' }}>
+                                            Full
+                                        </Typography>
+                                    ) : (
+                                        <Typography variant='body2' color='red' sx={{ minWidth: 72, textAlign: 'right' }}>
                                             {a.status}
                                         </Typography>
                                     )
