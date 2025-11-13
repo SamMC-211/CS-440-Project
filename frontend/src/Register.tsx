@@ -98,7 +98,7 @@ function Register({ setSnackbar }: RegisterProps) {
                         background: 'linear-gradient(45deg,rgba(19, 22, 24, 1) 0%, rgba(19, 22, 24, 0.27) 100%)',
                     }}
                 />
-                <CustomHeader text='Schedule Fit' variant='h1' margin={30} />
+                <CustomHeader text='Schedule Fit' variant='h1' margin={30} link={false} />
                 <Card sx={{ width: 650, padding: 2, zIndex: 1, position: 'relative' }}>
                     <CardContent>
                         <Typography variant='h5' component='div' textAlign='center' gutterBottom>

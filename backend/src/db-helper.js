@@ -344,6 +344,44 @@ function providerCancelAppointmentUpdated(apptId, callback) {
     });
 }
 
+function clearAllData() { //except rooms
+    var sql = `
+    DELETE FROM appointments;
+	`;
+    db.run(sql);
+
+    var sql2 = `
+    DELETE FROM notifications;
+	`;
+    db.run(sql2);
+
+    const sql3 = `
+    DELETE FROM users;
+	`;
+    db.run(sql3);
+}
+
+function createAdmin() {
+     const sql = `
+		INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+	`;
+    db.run(sql, ['admin', 'user', 'admin@gmail.com', 'password', 'admin', '', '']);
+}
+
+function insertPreviousDemoAppointments() {
+    const sql = `
+    INSERT INTO appointments (provider_id, title, start_time, end_time, room_id, appt_type, date, description, status, is_booked)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'booked', 1)
+	`;
+    // will need to change first value to id of Abby
+    db.run(sql, ['6', 'Hair Highlight', '3:00', '4:00', '1', 'training', '10/15/2025', 'training']);
+    
+    // will need to change first value to id of Katie
+    db.run(sql, ['7', 'Face Moisterizer Treatment', '3:00', '4:00', '2', 'training', '10/15/2025']);
+}
+
+
 module.exports = {
     createUser,
     getUserByEmail,
@@ -361,4 +399,7 @@ module.exports = {
     createNotification,
     deleteNotification,
     cancelAppointmentUpdated,
+    clearAllData,
+    createAdmin,
+    insertPreviousDemoAppointments,
 };

@@ -45,9 +45,12 @@ app.use(
 // dbhelper.createRoom(101, () => {});
 // dbhelper.createRoom(102, () => {});
 // dbhelper.createRoom(103, () => {});
-dbhelper.createUser('Sam', 'Christenson', 'sammc@gmail.com', 'password', 'admin', '', '', function (err) {
-    console.log('Error' + err);
-});
+// dbhelper.createUser('Sam', 'Christenson', 'sammc@gmail.com', 'password', 'admin', '', '', function (err) {
+//     console.log('Error' + err);
+// });
+// dbhelper.clearAllData();
+// dbhelper.createAdmin();
+//dbhelper.insertPreviousDemoAppointments();
 
 // ================================Login=====================================================
 
