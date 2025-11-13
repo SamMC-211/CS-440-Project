@@ -4,35 +4,14 @@ const db = require('./db');
 // ---------------- USERS ----------------
 
 // Create/register a new user or provider
-function createUser(
-    firstName,
-    lastName,
-    email,
-    password,
-    role,
-    providerName,
-    qualifications,
-    callback
-) {
+function createUser(firstName, lastName, email, password, role, providerName, qualifications, callback) {
     const sql = `
 		INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
 		VALUES (?, ?, ?, ?, ?, ?, ?, 1)
 	`;
-    db.run(
-        sql,
-        [
-            firstName,
-            lastName,
-            email,
-            password,
-            role,
-            providerName,
-            qualifications,
-        ],
-        function (err) {
-            callback(err, { user_id: this?.lastID });
-        }
-    );
+    db.run(sql, [firstName, lastName, email, password, role, providerName, qualifications], function (err) {
+        callback(err, { user_id: this?.lastID });
+    });
 }
 
 // Get a user by email
@@ -46,13 +25,9 @@ function getUserByEmail(email, callback) {
 
 // add a room
 function createRoom(roomNum, callback) {
-    db.run(
-        `INSERT INTO rooms (room_num) VALUES (?)`,
-        [roomNum],
-        function (err) {
-            callback(err, { room_id: this?.lastID });
-        }
-    );
+    db.run(`INSERT INTO rooms (room_num) VALUES (?)`, [roomNum], function (err) {
+        callback(err, { room_id: this?.lastID });
+    });
 }
 
 // Get all rooms
@@ -65,38 +40,15 @@ function getRooms(callback) {
 // ---------------- APPOINTMENTS ----------------
 
 // Provider creates/open a time slot
-function createAppointment(
-    providerId,
-    title,
-    startTime,
-    endTime,
-    roomId,
-    apptType,
-    date,
-    description,
-    callback
-) {
+function createAppointment(providerId, title, startTime, endTime, roomId, apptType, date, description, callback) {
     const sql = `
 		INSERT INTO appointments (provider_id, title, start_time, end_time, room_id, appt_type, date, description, status, is_booked)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', 0)
 	`;
     //this.lastID = this(statement object just executed) lastID = (auto incremented ID of last inserted row)
-    db.run(
-        sql,
-        [
-            providerId,
-            title,
-            startTime,
-            endTime,
-            roomId,
-            apptType,
-            date,
-            description,
-        ],
-        function (err) {
-            callback(err, { appt_id: this?.lastID });
-        }
-    );
+    db.run(sql, [providerId, title, startTime, endTime, roomId, apptType, date, description], function (err) {
+        callback(err, { appt_id: this?.lastID });
+    });
 }
 
 // User books an appointment WITH conflict checks
@@ -111,70 +63,50 @@ function bookAppointment(apptId, userId, callback) {
         }
         if (!appt) return callback(new Error('Appointment not found.'));
         if (appt.is_booked || appt.status !== 'open') {
-            return callback(
-                new Error('This appointment slot is already booked.')
-            );
+            return callback(new Error('This appointment slot is already booked.'));
         }
+
+        const apptDate = appt.date;
+        const apptStartTime = appt.start_time;
+        const apptEndTime = appt.end_time;
 
         // check if the user already has a conflicting appointment
         const conflictSql = `
 			SELECT * FROM appointments
-			WHERE user_id = ?
-			AND status = 'booked'
-			AND (
-				(start_time < ? AND end_time > ?)
-				OR (start_time >= ? AND start_time < ?)
-			)
-      AND date = ?
+			WHERE user_id = ? 
+                AND date = ? 
+                AND start_time = ?
+                AND end_time = ? 
 		`;
 
-        db.get(
-            conflictSql,
-            [
-                userId,
-                appt.end_time,
-                appt.start_time,
-                appt.start_time,
-                appt.end_time,
-                appt.date,
-            ],
-            (err, conflict) => {
-                if (err) {
-                    return callback(err);
-                }
-                if (conflict) {
-                    return callback(
-                        new Error(
-                            'User already has an appointment at this time.'
-                        )
-                    );
-                }
+        db.get(conflictSql, [userId, apptDate, apptStartTime, apptEndTime], (err, conflict) => {
+            if (err) {
+                return callback(err);
+            }
+            if (conflict) {
+                return callback(new Error('User has an existing appointment booked during this time.'));
+            }
 
-                // book the appointment
-                const updateSql = `
+            // book the appointment
+            const updateSql = `
 				UPDATE appointments
 				SET user_id = ?, is_booked = 1, status = 'booked'
 				WHERE appt_id = ? AND status = 'open'
 			`;
 
-                db.run(updateSql, [userId, apptId], function (err) {
-                    if (err) {
-                        return callback(err);
-                    }
-                    if (this.changes === 0) {
-                        return callback(
-                            new Error(
-                                'Failed to book appointment (might already be booked).'
-                            )
-                        );
-                    }
-                    callback(null, {
-                        message: 'Appointment booked successfully',
-                        appt_id: apptId,
-                    });
+            db.run(updateSql, [userId, apptId], function (err) {
+                if (err) {
+                    return callback(err);
+                }
+                if (this.changes === 0) {
+                    return callback(new Error('Failed to book appointment (might already be booked).'));
+                }
+                callback(null, {
+                    message: 'Appointment booked successfully',
+                    appt_id: apptId,
                 });
-            }
-        );
+            });
+        });
     });
 }
 
@@ -213,8 +145,7 @@ function cancelAppointment(userID, apptId, callback) {
     //get caller role
     db.get(getRoleSql, [userID], function (err, row) {
         if (err) return callback(err);
-        if (!row || !row.role)
-            return callback(new Error('Caller user not found or has no role'));
+        if (!row || !row.role) return callback(new Error('Caller user not found or has no role'));
 
         //Capture user role
         const role = row.role;
@@ -232,27 +163,18 @@ function cancelAppointment(userID, apptId, callback) {
             let sqlToRun;
 
             if (role === 'user') {
-                if (!isBooked)
-                    return callback(new Error('Appointment is not booked'));
+                if (!isBooked) return callback(new Error('Appointment is not booked'));
                 if (Number(appointmentUserId) !== Number(userID)) {
-                    return callback(
-                        new Error('User is not the owner of this booking')
-                    );
+                    return callback(new Error('User is not the owner of this booking'));
                 }
                 sqlToRun = userCancelSql;
             } else if (role === 'provider') {
                 if (Number(appointmentProviderId) !== Number(userID)) {
-                    return callback(
-                        new Error(
-                            'Provider not authorized to cancel this appointment'
-                        )
-                    );
+                    return callback(new Error('Provider not authorized to cancel this appointment'));
                 }
                 sqlToRun = providerCancelSql;
             } else {
-                return callback(
-                    new Error('Role not allowed to cancel appointments')
-                );
+                return callback(new Error('Role not allowed to cancel appointments'));
             }
 
             //perform update
@@ -261,34 +183,26 @@ function cancelAppointment(userID, apptId, callback) {
 
                 // Check changes
                 if (!this || !this.changes || this.changes === 0) {
-                    return callback(
-                        new Error(
-                            'No appointment was updated (maybe state already changed)'
-                        )
-                    );
+                    return callback(new Error('No appointment was updated (maybe state already changed)'));
                 }
 
                 //If appointment appointment was booked and canceled by provider
                 if (appointmentUserId && role === 'provider') {
-                    db.run(
-                        createNotifSql,
-                        [appointmentUserId, apptId],
-                        function (err4) {
-                            if (err4) {
-                                // Notification failed — this is non-fatal for cancellation itself.
-                                return callback(null, {
-                                    ok: true,
-                                    changes: this.changes,
-                                    notifError: err4.message,
-                                });
-                            }
-                            console.log('Notif Inserted:' + this.changes);
+                    db.run(createNotifSql, [appointmentUserId, apptId], function (err4) {
+                        if (err4) {
+                            // Notification failed — this is non-fatal for cancellation itself.
                             return callback(null, {
                                 ok: true,
                                 changes: this.changes,
+                                notifError: err4.message,
                             });
                         }
-                    );
+                        console.log('Notif Inserted:' + this.changes);
+                        return callback(null, {
+                            ok: true,
+                            changes: this.changes,
+                        });
+                    });
                 } else {
                     // No notification necessary — return success
                     return callback(null, { ok: true, changes: this.changes });
@@ -306,13 +220,7 @@ function getAppointments(callback) {
 }
 
 // check if an appt already exists for a given provider/time/room/day
-function getAppointmentByDetails(
-    providerId,
-    startTime,
-    endTime,
-    roomId,
-    callback
-) {
+function getAppointmentByDetails(providerId, startTime, endTime, roomId, callback) {
     const sql = `
 		SELECT *
 		FROM appointments
@@ -324,15 +232,11 @@ function getAppointmentByDetails(
 		)
 	`;
 
-    db.get(
-        sql,
-        [providerId, roomId, endTime, startTime, startTime, endTime],
-        (err, row) => {
-            if (err) return callback(err);
-            if (!row) return callback(null, null); // no conflict
-            callback(null, row); // return conflicting appt
-        }
-    );
+    db.get(sql, [providerId, roomId, endTime, startTime, startTime, endTime], (err, row) => {
+        if (err) return callback(err);
+        if (!row) return callback(null, null); // no conflict
+        callback(null, row); // return conflicting appt
+    });
 }
 
 //Made adjustment to also pull user info of bookee?
@@ -345,6 +249,7 @@ function getAppointmentsForList(callback) {
       p.first_name          AS provider_firstname,
       p.last_name           AS provider_lastname,
       appointments.appt_type    AS appt_type,
+      appointments.room_id      AS room_id,
       rooms.room_num            AS room_num,
       appointments.status       AS status,
       appointments.is_booked    AS is_booked,
@@ -474,15 +379,7 @@ function createAdmin() {
 		INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
 		VALUES (?, ?, ?, ?, ?, ?, ?, 1)
 	`;
-    db.run(sql, [
-        'admin',
-        'user',
-        'admin@gmail.com',
-        'password',
-        'admin',
-        '',
-        '',
-    ]);
+    db.run(sql, ['admin', 'user', 'admin@gmail.com', 'password', 'admin', '', '']);
 }
 
 function insertPreviousDemoAppointments() {
@@ -491,28 +388,10 @@ function insertPreviousDemoAppointments() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'booked', 1)
 	`;
     // will need to change first value to id of Abby
-    db.run(sql, [
-        '9',
-        'Hair Highlight',
-        '3:00',
-        '4:00',
-        '1',
-        'training',
-        '10/15/2025',
-        'training',
-    ]);
+    db.run(sql, ['9', 'Hair Highlight', '3:00', '4:00', '1', 'training', '10/15/2025', 'training']);
 
     // will need to change first value to id of Katie
-    db.run(sql, [
-        '10',
-        'Face Moisterizer Treatment',
-        '3:00',
-        '4:00',
-        '2',
-        'training',
-        '10/15/2025',
-        'Face Treatment',
-    ]);
+    db.run(sql, ['10', 'Face Moisterizer Treatment', '3:00', '4:00', '2', 'training', '10/15/2025', 'Face Treatment']);
 }
 
 module.exports = {

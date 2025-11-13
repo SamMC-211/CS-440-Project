@@ -6,33 +6,7 @@ import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import SlotList from './AppointmentList';
 import CustomHeader from './CustomHeader';
-
-type AppointmentObject = {
-    appt_id: number;
-    provider_id: number;
-    provider_name: string;
-    provider_firstname: string;
-    provider_lastname: string;
-    appt_type: string;
-    room_num: number;
-    status: string;
-    is_booked: number;
-    user_id: number | null;
-    start_time: string;
-    end_time: string;
-    date: string;
-    title: string;
-    description: string;
-};
-
-type User = {
-    userID: number | null;
-    firstName: string;
-    lastName: string;
-    role: string;
-    email: string;
-    providerName: string;
-};
+import type { Appointment as AppointmentObject, User } from '../types';
 
 type Props = {
     user: User;

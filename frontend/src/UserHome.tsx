@@ -41,6 +41,7 @@ import CustomHeader from './components/CustomHeader';
 import DrawerButton from './components/DrawerButton';
 import QuickViewWindow from './components/QuickViewWindow';
 import Background from './components/Background';
+import type { Appointment as AppointmentObject, User, Notification } from './types';
 
 // TODO
 // Make snackbar into serarate component that you pass message/error to
@@ -50,38 +51,39 @@ import Background from './components/Background';
 // add error popup option for more information (message: vs err: err.message) show full err.messsage
 // separate out snackbar into separate component
 //======================================Constants===========================================================
-type AppointmentObject = {
-    appt_id: number;
-    provider_id: number;
-    provider_name: string;
-    provider_firstname: string;
-    provider_lastname: string;
-    appt_type: string;
-    room_num: number;
-    status: string;
-    is_booked: number;
-    user_id: number | null;
-    start_time: string;
-    end_time: string;
-    date: string;
-    title: string;
-    description: string;
-};
-type User = {
-    userID: number | null;
-    firstName: string;
-    lastName: string;
-    role: string;
-    email: string;
-    providerName: string;
-};
+// type AppointmentObject = {
+//     appt_id: number;
+//     provider_id: number;
+//     provider_name: string;
+//     provider_firstname: string;
+//     provider_lastname: string;
+//     appt_type: string;
+//     room_id: number;
+//     room_num: number;
+//     status: string;
+//     is_booked: number;
+//     user_id: number | null;
+//     start_time: string;
+//     end_time: string;
+//     date: string;
+//     title: string;
+//     description: string;
+// };
+// type User = {
+//     userID: number | null;
+//     firstName: string;
+//     lastName: string;
+//     role: string;
+//     email: string;
+//     providerName: string;
+// };
 
-type Notification = {
-    notif_id: number;
-    user_id: number;
-    time: string;
-    message: string;
-};
+// type Notification = {
+//     notif_id: number;
+//     user_id: number;
+//     time: string;
+//     message: string;
+// };
 
 //Toggle Button Names by User type
 const userToggleButtons = ['Dashboard', 'Search Appointments'];
@@ -108,18 +110,12 @@ const initAppointmentRange = {
     beforeDate: '',
     afterDate: '',
 };
-const columns: GridColDef[] = [
-    { field: 'firstname', headerName: 'First Name', flex: 1 },
-    { field: 'lastname', headerName: ' Last Name', flex: 1 },
-    { field: 'email', headerName: 'Email', flex: 1 },
-    { field: 'password', headerName: 'Password', flex: 1 },
-];
 
 function UserHome() {
     const [user, setUser] = useState(initialUser);
     const [toggleButton, setToggleButton] = useState(0);
     const [currentToggleButtons, setCurrentToggleButtons] = useState<string[]>([]);
-    const [filter, setFilter] = useState('');
+    // const [filter, setFilter] = useState('');
 
     const [appointmentList, setAppointmentList] = useState<AppointmentObject[]>([]);
     const [bookedAppointmentList, setBookedAppointmentList] = useState();
@@ -228,37 +224,6 @@ function UserHome() {
                 }
             })
             .catch((err) => console.error(err));
-    }
-
-    async function getUserNotifications(user: User) {
-        console.log('Get User Notifications For:' + user);
-        try {
-            const res = await fetch('api/notifications/user', {
-                method: 'GET',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userID: user.userID }),
-            });
-
-            const data = await res.json();
-
-            if (data.ok) {
-                setNotificationList(data.results);
-            } else {
-                setSnackbar({
-                    open: true,
-                    message: data.message,
-                    severity: 'error',
-                });
-            }
-        } catch (err) {
-            console.log(err);
-            setSnackbar({
-                open: true,
-                message: 'Network error during notification fetch',
-                severity: 'error',
-            });
-        }
     }
 
     //======================================OnClick Functions===========================================================
@@ -384,6 +349,11 @@ function UserHome() {
             const data = await res.json();
             if (!res.ok) {
                 setError(data.message || 'Appointment Booking Failed');
+                setSnackbar({
+                    open: true,
+                    message: data.message + ': ' + data.error,
+                    severity: 'error',
+                });
                 return;
             }
             //Snackbar popup to inform user that their account was successfully registered
@@ -782,12 +752,12 @@ function UserHome() {
                                                         <option value='9:00-10:00'>9:00-10:00</option>
                                                         <option value='10:00-11:00'>10:00-11:00</option>
                                                         <option value='11:00-12:00'>11:00-12:00</option>
-                                                        <option value='9:00-10:00'>12:00-1:00</option>
-                                                        <option value='10:00-11:00'>1:00-2:00</option>
-                                                        <option value='11:00-12:00'>2:00-3:00</option>
-                                                        <option value='9:00-10:00'>3:00-4:00</option>
-                                                        <option value='10:00-11:00'>4:00-5:00</option>
-                                                        <option value='11:00-12:00'>5:00-6:00</option>
+                                                        <option value='12:00-1:00'>12:00-1:00</option>
+                                                        <option value='1:00-2:00'>1:00-2:00</option>
+                                                        <option value='2:00-3:00'>2:00-3:00</option>
+                                                        <option value='3:00-4:00'>3:00-4:00</option>
+                                                        <option value='4:00-5:00'>4:00-5:00</option>
+                                                        <option value='5:00-6:00'>5:00-6:00</option>
                                                     </TextField>
 
                                                     <TextField

@@ -33,7 +33,7 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
             }
         });
         //display appointments
-        console.log('Appointment Entries:');
+        console.log('Notification Entries:');
         db.all('SELECT * from appointments', (err, row) => {
             if (err) {
                 console.log('Error displaying appointments');
@@ -43,6 +43,18 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
                 });
             } else {
                 console.log('Error displaying appointments');
+            }
+        });
+        console.log('Notification Entries:');
+        db.all('SELECT * from notifications', (err, row) => {
+            if (err) {
+                console.log('Error displaying notifications');
+            } else if (row) {
+                row.forEach((user, index) => {
+                    console.log(user);
+                });
+            } else {
+                console.log('Error displaying notifications');
             }
         });
     }
