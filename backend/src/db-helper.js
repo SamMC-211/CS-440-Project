@@ -357,7 +357,7 @@ function providerCancelAppointmentUpdated(apptId, callback) {
 }
 
 function clearAllData() {
-    //except rooms
+    //except rooms and users
     var sql = `
     DELETE FROM appointments;
 	`;
@@ -368,10 +368,6 @@ function clearAllData() {
 	`;
     db.run(sql2);
 
-    const sql3 = `
-    DELETE FROM users;
-	`;
-    db.run(sql3);
 }
 
 function createAdmin() {
