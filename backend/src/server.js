@@ -95,6 +95,7 @@ const sql2 = `
 // API: login (POST request)
 //Once the server recieves a POST with param '/api/login' the handler function(req, res) => is called
 //TODO: Check hashed password
+/*
 app.post('/api/login', (req, res) => {
     // Simulate load time
     const { email, password } = req.body || {}; //parse POST body into email and password
@@ -122,6 +123,59 @@ app.post('/api/login', (req, res) => {
         }
     });
 });
+*/
+
+// new app.post that checks the hashed password
+const bcrypt = require('bcrypt');
+
+app.post('/api/login', (req, res) => {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+        return res.status(400).json({ ok: false, message: 'Missing email or password' });
+    }
+
+    // Fetch user by email ONLY
+    db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Login Error',
+                error: err.message,
+            });
+        }
+
+        if (!row) {
+            return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+        }
+
+        // Compare the supplied password with the hashed password in DB
+        bcrypt.compare(password, row.password, (err, isMatch) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ ok: false, message: 'Server error' });
+            }
+
+            if (!isMatch) {
+                return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
+            }
+
+            // Password matched — create session
+            req.session.user = { 
+                email: row.email,
+                user_id: row.user_id,
+                role: row.role,
+                first_name: row.first_name,
+                last_name: row.last_name
+            };
+
+            console.log('Session just initialized:', req.session);
+
+            return res.json({ ok: true, user: req.session.user });
+        });
+    });
+});
+
 
 // API: check current user (lets frontend check "am I logged in") (GET request from frontend)
 //Used by "RequireAuth"

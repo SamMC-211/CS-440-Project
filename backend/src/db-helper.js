@@ -1,9 +1,13 @@
 // dbHelper.js
 const db = require('./db');
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
+
 
 // ---------------- USERS ----------------
 
-// Create/register a new user or provider
+// Create/register a new user or provider - no hashing used for password
+/*
 function createUser(firstName, lastName, email, password, role, providerName, qualifications, callback) {
     const sql = `
 		INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
@@ -13,6 +17,29 @@ function createUser(firstName, lastName, email, password, role, providerName, qu
         callback(err, { user_id: this?.lastID });
     });
 }
+*/
+
+// Create/register a new user or provider (PASSWORD HASHED)
+function createUser(firstName, lastName, email, password, role, providerName, qualifications, callback) {
+    // Hash the password before storing it
+    bcrypt.hash(password, SALT_ROUNDS, (err, hashedPassword) => {
+        if (err) return callback(err);
+
+        const sql = `
+            INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        `;
+
+        db.run(
+            sql,
+            [firstName, lastName, email, hashedPassword, role, providerName, qualifications],
+            function (err) {
+                callback(err, { user_id: this?.lastID });
+            }
+        );
+    });
+}
+
 
 // Get a user by email
 function getUserByEmail(email, callback) {
