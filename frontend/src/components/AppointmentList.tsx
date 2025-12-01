@@ -1,32 +1,6 @@
 import { Button, Divider, List, ListItem, ListItemText, ListSubheader, Paper, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-
-type Appointment = {
-    date: string;
-    title: string;
-    appt_id: number;
-    provider_id: number;
-    provider_name: string;
-    provider_firstname: string;
-    provider_lastname: string;
-    appt_type: string;
-    room_num: number;
-    status: string;
-    is_booked: number;
-    user_id: number | null;
-    start_time: string;
-    end_time: string;
-    description: string;
-};
-
-type User = {
-    userID: number | null;
-    firstName: string;
-    lastName: string;
-    role: string;
-    email: string;
-    providerName: string;
-};
+import type { Appointment, User } from '../types';
 
 type Props = {
     appointments?: Appointment[];

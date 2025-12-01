@@ -301,6 +301,38 @@ app.get('/api/users/active', (req, res) => {
     });
 });
 
+app.patch('/api/users/activate', (req, res) => { 
+    var userId = req.body
+
+    dbhelper.activateUser(userId, (err, results) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error activating user',
+                error: err.message,
+            });
+        } else {
+            return res.status(200).json({ ok: true, results: results });
+        }
+    });
+});
+
+app.patch('/api/users/deactivate', (req, res) => { 
+    var userId = req.body
+
+    dbhelper.deactivateUser(userId, (err, results) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error activating user',
+                error: err.message,
+            });
+        } else {
+            return res.status(200).json({ ok: true, results: results });
+        }
+    });
+});
+
 // ================================Appointments=====================================================
 
 // CREATE APPOINTMENT
@@ -389,6 +421,69 @@ app.get('/api/appointments/all', (req, res) => {
             });
         } else {
             return res.status(201).json({ ok: true, results: results });
+        }
+    });
+});
+
+app.get('/api/appointments/booked/user', (req, res) => { //probably badly named endpoint
+    
+    const { userID, minDate, maxDate, type, role } = req.query;
+
+    if (role != 'admin') {
+        res.status(301).json({
+                ok: false,
+                message: 'need to be an admin',
+                error: e.message,
+            });
+    }
+
+    dbhelper.GetAppointmentsByBookedUser(userID, (err, results) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error retrieving appointments',
+                error: err.message,
+            });
+        }
+
+
+        try {
+            const { userID, minDate, maxDate, type, role } = req.query;
+
+            // Parse date filters
+            const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : null;
+            const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
+
+            // Convert result dates to Date objects for comparison
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = StringToDate(results[i].date);
+            }
+
+            // Apply filters
+            if (!isNullOrWhiteSpace(type)) {
+                results = results.filter((r) => r.appt_type == type);
+            }
+
+            if (min) {
+                results = results.filter((r) => r.date >= min);
+            }
+
+            if (max) {
+                results = results.filter((r) => r.date <= max);
+            }
+
+            // Convert date back to string for response
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = DateToString(results[i].date);
+            }
+
+            return res.status(200).json({ ok: true, results });
+        } catch (e) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error processing appointment data',
+                error: e.message,
+            });
         }
     });
 });

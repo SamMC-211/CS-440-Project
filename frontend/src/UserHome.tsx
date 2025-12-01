@@ -16,12 +16,6 @@ import {
     Paper,
     Snackbar,
     Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
@@ -50,40 +44,6 @@ import type { Appointment as AppointmentObject, User, Notification } from './typ
 // Separate out filterable table into its own component (Use for viewing and possibly booking appointments?)(Takes an array of appointmentObjects (appointmentList))
 // add error popup option for more information (message: vs err: err.message) show full err.messsage
 // separate out snackbar into separate component
-//======================================Constants===========================================================
-// type AppointmentObject = {
-//     appt_id: number;
-//     provider_id: number;
-//     provider_name: string;
-//     provider_firstname: string;
-//     provider_lastname: string;
-//     appt_type: string;
-//     room_id: number;
-//     room_num: number;
-//     status: string;
-//     is_booked: number;
-//     user_id: number | null;
-//     start_time: string;
-//     end_time: string;
-//     date: string;
-//     title: string;
-//     description: string;
-// };
-// type User = {
-//     userID: number | null;
-//     firstName: string;
-//     lastName: string;
-//     role: string;
-//     email: string;
-//     providerName: string;
-// };
-
-// type Notification = {
-//     notif_id: number;
-//     user_id: number;
-//     time: string;
-//     message: string;
-// };
 
 //Toggle Button Names by User type
 const userToggleButtons = ['Dashboard', 'Search Appointments'];

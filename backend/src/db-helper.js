@@ -40,6 +40,31 @@ function createUser(firstName, lastName, email, password, role, providerName, qu
     });
 }
 
+function deactivateUser(userId, callback) {
+    const sql = `
+        UPDATE users
+        SET is_active = 0
+        WHERE user_id = ?
+    `;
+
+    db.run(sql, [userId], function (err) {
+        callback(err, { changes: this?.changes });
+    });
+
+}
+
+function activateUser(userId, callback) {
+    const sql = `
+        UPDATE users
+        SET is_active = 1
+        WHERE user_id = ?
+    `;
+
+    db.run(sql, [userId], function (err) {
+        callback(err, { changes: this?.changes });
+    });
+
+}
 
 // Get a user by email
 function getUserByEmail(email, callback) {
@@ -298,6 +323,38 @@ function getAppointmentsForList(callback) {
     });
 }
 
+function GetAppointmentsByBookedUser(userId, callback) {
+    const sql = `
+        SELECT
+            appointments.appt_id      AS appt_id,
+            appointments.provider_id  AS provider_id,
+            p.provider_name           AS provider_name,
+            p.first_name              AS provider_firstname,
+            p.last_name               AS provider_lastname,
+            appointments.appt_type    AS appt_type,
+            appointments.room_id      AS room_id,
+            rooms.room_num            AS room_num,
+            appointments.status       AS status,
+            appointments.is_booked    AS is_booked,
+            appointments.user_id      AS user_id,
+            appointments.start_time   AS start_time,
+            appointments.end_time     AS end_time,
+            appointments.date         AS date,
+            appointments.title        AS title,
+            appointments.description  AS description
+        FROM appointments
+        JOIN users p ON appointments.provider_id = p.user_id
+        LEFT JOIN users u ON appointments.user_id = u.user_id
+        JOIN rooms ON appointments.room_id = rooms.room_id
+        WHERE appointments.user_id = ?
+        ORDER BY appointments.date DESC
+    `;
+
+    db.all(sql, [userId], (err, rows) => {
+        callback(err, rows);
+    });
+}
+
 // ---------------- NOTIFICATIONS ----------------
 // Get all notifications
 function getNotifications(callback) {
@@ -410,14 +467,48 @@ function insertPreviousDemoAppointments() {
     INSERT INTO appointments (provider_id, title, start_time, end_time, room_id, appt_type, date, description, status, is_booked)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'booked', 1)
 	`;
-    // will need to change first value to id of Abby
-    db.run(sql, ['9', 'Hair Highlight', '3:00', '4:00', '1', 'training', '10/15/2025', 'training']);
 
-    // will need to change first value to id of Katie
-    db.run(sql, ['10', 'Face Moisterizer Treatment', '3:00', '4:00', '2', 'training', '10/15/2025', 'Face Treatment']);
+    /*
+    / Id's to user
+    / 11: abby anderson
+    / 12: katie johnson
+    */
+
+    db.run(sql, ['11', 'Hair Highlight', '3:00', '4:00', '1', 'training', '10/15/2025', 'training']);
+
+    db.run(sql, ['12', 'Face Moisterizer Treatment', '3:00', '4:00', '2', 'training', '10/15/2025', 'Face Treatment']);
+
+    db.run(sql, ['11', 'Hair Cut', '3:00', '4:00', '1', 'training', '11/22/2025', 'training']);
+
+    db.run(sql, ['11', 'Color', '4:00', '5:00', '1', 'training', '10/15/2025', 'training']);
+
+    db.run(sql, ['12', 'Cleansing Facial', '3:00', '4:00', '1', 'training', '11/22/2025', 'training']);
+
+    db.run(sql, ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'training', '10/15/2025', 'training']);
+}
+
+function resetForDemoTest() {
+    clearAllData();
+    //except rooms and users
+    var sql = `
+    DELETE FROM appointments;
+	`;
+    db.run(sql);
+
+    var sql2 = `
+    DELETE FROM notifications;
+	`;
+    db.run(sql2);
+
+    insertPreviousDemoAppointments();
+
 }
 
 module.exports = {
+    GetAppointmentsByBookedUser,
+    resetForDemoTest,
+    activateUser,
+    deactivateUser,
     createUser,
     getUserByEmail,
     createRoom,
