@@ -504,7 +504,52 @@ function resetForDemoTest() {
 
 }
 
+function migratePasswordsToBcrypt(callback) {
+    const selectSql = `SELECT user_id, password FROM users`;
+
+    db.all(selectSql, [], async (err, users) => {
+        if (err) return callback(err);
+
+        // No users found
+        if (!users || users.length === 0) {
+            return callback(null, { updated: 0 });
+        }
+
+        let updatedCount = 0;
+
+        // Process each user sequentially to avoid overloading bcrypt
+        for (const user of users) {
+            try {
+                // Hash existing plaintext password
+                const hashed = await bcrypt.hash(user.password, SALT_ROUNDS);
+
+                const updateSql = `
+                    UPDATE users
+                    SET password = ?
+                    WHERE user_id = ?
+                `;
+
+                await new Promise((resolve, reject) => {
+                    db.run(updateSql, [hashed, user.user_id], (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+
+                updatedCount++;
+
+            } catch (err) {
+                return callback(err,  { message: 'Appointment booked successfully', });
+            }
+        }
+
+        callback(err,  { message: 'Appointment booked successfully', });
+    });
+}
+
+
 module.exports = {
+    migratePasswordsToBcrypt,
     GetAppointmentsByBookedUser,
     resetForDemoTest,
     activateUser,
