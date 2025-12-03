@@ -355,6 +355,40 @@ function GetAppointmentsByBookedUser(userId, callback) {
     });
 }
 
+// Function that gets all appointments made by a given provider
+function getAppointmentsByProvider(providerId, callback) {
+    const sql = `
+        SELECT
+            appointments.appt_id      AS appt_id,
+            appointments.provider_id  AS provider_id,
+            p.provider_name           AS provider_name,
+            p.first_name              AS provider_firstname,
+            p.last_name               AS provider_lastname,
+            appointments.appt_type    AS appt_type,
+            appointments.room_id      AS room_id,
+            rooms.room_num            AS room_num,
+            appointments.status       AS status,
+            appointments.is_booked    AS is_booked,
+            appointments.user_id      AS user_id,
+            appointments.start_time   AS start_time,
+            appointments.end_time     AS end_time,
+            appointments.date         AS date,
+            appointments.title        AS title,
+            appointments.description  AS description
+        FROM appointments
+        JOIN users p ON appointments.provider_id = p.user_id
+        LEFT JOIN users u ON appointments.user_id = u.user_id
+        JOIN rooms ON appointments.room_id = rooms.room_id
+        WHERE appointments.provider_id = ?
+        ORDER BY appointments.date DESC
+    `;
+
+    db.all(sql, [providerId], (err, rows) => {
+        callback(err, rows);
+    });
+}
+
+
 // ---------------- NOTIFICATIONS ----------------
 // Get all notifications
 function getNotifications(callback) {
@@ -551,6 +585,7 @@ function migratePasswordsToBcrypt(callback) {
 module.exports = {
     migratePasswordsToBcrypt,
     GetAppointmentsByBookedUser,
+    getAppointmentsByProvider
     resetForDemoTest,
     activateUser,
     deactivateUser,
