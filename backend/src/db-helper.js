@@ -388,6 +388,125 @@ function getAppointmentsByProvider(providerId, callback) {
     });
 }
 
+// Get all appointments by type/category (appt_type)
+function getAppointmentsByType(apptType, callback) {
+    const sql = `
+        SELECT
+            appointments.appt_id      AS appt_id,
+            appointments.provider_id  AS provider_id,
+            p.provider_name           AS provider_name,
+            p.first_name              AS provider_firstname,
+            p.last_name               AS provider_lastname,
+            appointments.appt_type    AS appt_type,
+            appointments.room_id      AS room_id,
+            rooms.room_num            AS room_num,
+            appointments.status       AS status,
+            appointments.is_booked    AS is_booked,
+            appointments.user_id      AS user_id,
+            appointments.start_time   AS start_time,
+            appointments.end_time     AS end_time,
+            appointments.date         AS date,
+            appointments.title        AS title,
+            appointments.description  AS description
+        FROM appointments
+        JOIN users p ON appointments.provider_id = p.user_id
+        LEFT JOIN users u ON appointments.user_id = u.user_id
+        JOIN rooms ON appointments.room_id = rooms.room_id
+        WHERE appointments.appt_type = ?
+        ORDER BY appointments.date DESC, appointments.start_time ASC
+    `;
+
+    db.all(sql, [apptType], (err, rows) => {
+        callback(err, rows);
+    });
+}
+
+function cancelAllAppointmentsByUser(userId, callback) {
+    const updateSql = `
+        UPDATE appointments
+        SET user_id = NULL,
+            is_booked = 0,
+            status = 'open'
+        WHERE user_id = ?
+    `;
+
+    const notifySql = `
+        INSERT INTO notifications (user_id, time, message)
+        SELECT provider_id,
+               datetime('now','localtime'),
+               'A user cancelled one of their appointments.'
+        FROM appointments
+        WHERE user_id IS NULL
+          AND provider_id IS NOT NULL
+    `;
+
+    db.serialize(() => {
+        db.run(updateSql, [userId], function (err) {
+            if (err) return callback(err);
+
+            const affected = this.changes;
+
+            db.run(notifySql, function (err2) {
+                if (err2) {
+                    return callback(null, {
+                        ok: true,
+                        cancelled: affected,
+                        notifError: err2.message,
+                    });
+                }
+
+                callback(null, {
+                    ok: true,
+                    cancelled: affected,
+                });
+            });
+        });
+    });
+}
+
+function cancelAllAppointmentsByProvider(providerId, callback) {
+    const updateSql = `
+        UPDATE appointments
+        SET user_id = NULL,
+            is_booked = 1,
+            status = 'cancelled'
+        WHERE provider_id = ?
+    `;
+
+    const notifySql = `
+        INSERT INTO notifications (user_id, time, message)
+        SELECT user_id,
+               datetime('now','localtime'),
+               'Your appointment was cancelled by the provider.'
+        FROM appointments
+        WHERE provider_id = ?
+          AND user_id IS NOT NULL
+    `;
+
+    db.serialize(() => {
+        db.run(updateSql, [providerId], function (err) {
+            if (err) return callback(err);
+
+            const affected = this.changes;
+
+            db.run(notifySql, [providerId], function (err2) {
+                if (err2) {
+                    return callback(null, {
+                        ok: true,
+                        cancelled: affected,
+                        notifError: err2.message,
+                    });
+                }
+
+                callback(null, {
+                    ok: true,
+                    cancelled: affected,
+                });
+            });
+        });
+    });
+}
+
 
 // ---------------- NOTIFICATIONS ----------------
 // Get all notifications
@@ -585,7 +704,10 @@ function migratePasswordsToBcrypt(callback) {
 module.exports = {
     migratePasswordsToBcrypt,
     GetAppointmentsByBookedUser,
-    getAppointmentsByProvider
+    getAppointmentsByProvider,
+    GetAppointmentsByBookedUser,
+    cancelAllAppointmentsByUser,
+    cancelAllAppointmentsByProvider,
     resetForDemoTest,
     activateUser,
     deactivateUser,

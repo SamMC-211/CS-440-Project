@@ -94,7 +94,7 @@ db.serialize(() => {
             is_booked INTEGER NOT NULL DEFAULT 0,
             user_id INTEGER NULL,
             room_id INTEGER NOT NULL,
-            appt_type TEXT,
+            appt_type TEXT, 
             description TEXT,
             status TEXT NOT NULL DEFAULT 'open',
             FOREIGN KEY (provider_id) REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
