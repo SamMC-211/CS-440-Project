@@ -24,6 +24,7 @@ export type User = {
     role: string;
     email: string;
     providerName: string;
+    isActive: number;
 };
 
 export type Notification = {

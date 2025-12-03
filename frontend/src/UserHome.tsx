@@ -48,7 +48,7 @@ import type { Appointment as AppointmentObject, User, Notification } from './typ
 //Toggle Button Names by User type
 const userToggleButtons = ['Dashboard', 'Search Appointments'];
 const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
-const adminToggleButtons = ['Admin View'];
+const adminToggleButtons = ['Admin View', 'User Data'];
 
 const initialUser: User = {
     userID: null,
@@ -57,6 +57,7 @@ const initialUser: User = {
     role: '',
     email: '',
     providerName: '',
+    isActive: 0,
 };
 const initialAppointment = {
     title: '',
@@ -139,6 +140,7 @@ function UserHome() {
                         role: data.user.role,
                         email: data.user.email,
                         providerName: data.user.provider_name,
+                        isActive: data.user.is_active,
                     });
                     if (data.user.role === 'admin') {
                         setCurrentToggleButtons(adminToggleButtons);

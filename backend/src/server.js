@@ -284,7 +284,7 @@ app.get('/api/users/active', (req, res) => {
     const userEmail = req.session.user.email;
 
     // Now you can query the DB for the rest of the user info
-    db.get('SELECT user_id, first_name, last_name, role, email, provider_name FROM users WHERE email = ?', [userEmail], (err, row) => {
+    db.get('SELECT user_id, first_name, last_name, role, email, provider_name, is_active FROM users WHERE email = ?', [userEmail], (err, row) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
