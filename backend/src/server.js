@@ -252,7 +252,7 @@ app.post('/api/register', (req, res) => {
 app.get('/api/users', (req, res) => {
     //Use query params passed in request route
     const limit = parseInt(req.query.limit) || 10;
-    const sort = req.query.sort === 'lastname' ? 'lastname' : 'id'; //whitelist allowed sorting fields
+    const sort = req.query.sort === 'lastname' ? 'lastname' : 'user_id'; //whitelist allowed sorting fields
 
     //Prevent SQL injection
     const sql = `SELECT * FROM users ORDER BY ${sort} ASC LIMIT ?`; //column name "sort" cannot be passed as a param in db.all
@@ -267,7 +267,7 @@ app.get('/api/users', (req, res) => {
         } else if (rows) {
             return res.json({
                 success: true,
-                results: rows,
+                results: rows.map(row => {userID: row.}),
                 count: rows.length,
             }); //Wrap rows in object, useful for including metadata
             // return res.json(rows);
@@ -324,7 +324,7 @@ app.patch('/api/users/deactivate', (req, res) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                message: 'Error activating user',
+                message: 'Error deactivating user',
                 error: err.message,
             });
         } else {

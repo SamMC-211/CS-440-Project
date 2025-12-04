@@ -36,6 +36,7 @@ import DrawerButton from './components/DrawerButton';
 import QuickViewWindow from './components/QuickViewWindow';
 import Background from './components/Background';
 import type { Appointment as AppointmentObject, User, Notification } from './types';
+import UserList from './components/UserList';
 
 // TODO
 // Make snackbar into serarate component that you pass message/error to
@@ -79,6 +80,7 @@ function UserHome() {
     // const [filter, setFilter] = useState('');
 
     const [appointmentList, setAppointmentList] = useState<AppointmentObject[]>([]);
+    const [userList, setUserList] = useState<User[]>([]);
     const [bookedAppointmentList, setBookedAppointmentList] = useState();
     const [notificationList, setNotificationList] = useState<Notification[]>([]);
 
@@ -101,31 +103,31 @@ function UserHome() {
 
     //======================================UseEffect===========================================================
     //If user is admin, pull list of users
-    useEffect(() => {
-        // Only fetch if the user is a provider
-        if (user.role !== 'admin') {
-            return;
-        }
+    // useEffect(() => {
+    //     // Only fetch if the user is a provider
+    //     if (user.role !== 'admin') {
+    //         return;
+    //     }
 
-        fetch('/api/users?limit=10&sort=lastname', {
-            method: 'GET',
-            credentials: 'include',
-        })
-            .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
-            //same as doing
-            // .then((res) => {
-            //     return res.json();
-            // })
-            .then((data) => {
-                //data is whatever I passed to res.json on the express side
-                if (data.success) {
-                    setRows(data.results);
-                } else {
-                    setError(data.message);
-                }
-            })
-            .catch((err) => console.error(err));
-    }, [user.role]);
+    //     fetch('/api/users?limit=10&sort=lastname', {
+    //         method: 'GET',
+    //         credentials: 'include',
+    //     })
+    //         .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
+    //         //same as doing
+    //         // .then((res) => {
+    //         //     return res.json();
+    //         // })
+    //         .then((data) => {
+    //             //data is whatever I passed to res.json on the express side
+    //             if (data.success) {
+    //                 setRows(data.results);
+    //             } else {
+    //                 setError(data.message);
+    //             }
+    //         })
+    //         .catch((err) => console.error(err));
+    // }, [user.role]);
 
     //Grab active user information
     useEffect(() => {
@@ -144,6 +146,7 @@ function UserHome() {
                     });
                     if (data.user.role === 'admin') {
                         setCurrentToggleButtons(adminToggleButtons);
+                        getUserList();
                     } else if (data.user.role === 'provider') {
                         setCurrentToggleButtons(providerToggleButtons);
                     } else {
@@ -371,6 +374,72 @@ function UserHome() {
             console.log(err);
         } finally {
             setLoading(false);
+        }
+    }
+
+    function convertToUserObject(stuff: any[]) {
+        const users: User[] = [];
+
+        stuff.forEach((guy, index) => {
+            users[index] = {
+                userID: guy.user_id,
+                firstName: guy.first_name,
+                lastName: guy.last_name,
+                role: guy.role,
+                isActive: guy.is_active,
+                email: guy.email,
+                providerName: guy.provider_name,
+            } as User
+        });
+
+        return users;
+    }
+
+    async function getUserList() {
+        try {
+            const res = await fetch('/api/users', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await res.json();
+            
+            setUserList(convertToUserObject(data.results));
+        } catch (err) {
+            setError('Network error');
+            console.log(err);
+        }
+    }
+
+    async function ActivateUser(user: User) {
+        try {
+            const res = await fetch('/api/users/activate', {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userID: user.userID, role: user.role }),
+            });
+            const data = await res.json();
+            getUserList();
+        } catch (err) {
+            setError('Network error');
+            console.log(err);
+        }
+    }
+
+    async function DeactivateUser(user: User) {
+            try {
+            const res = await fetch('/api/users/deactivate', {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userID: user.userID, role: user.role }),
+            });
+            const data = await res.json();
+            getUserList();
+        } catch (err) {
+            setError('Network error');
+            console.log(err);
         }
     }
 
@@ -755,8 +824,17 @@ function UserHome() {
                     )}
                     {/* Render Admin */}
                     {user.role == 'admin' && ( //admin I guess
-                        <>
-                            <AppointmentTable appointments={appointmentList} user={user} variant='admin' />
+                        <>     
+                            {toggleButton == 0 && (
+                                <>
+                                    <AppointmentTable appointments={appointmentList} user={user} variant='admin' />
+                                </>
+                            )}
+                            {toggleButton == 1 && (
+                                <>
+                                    <UserList users={userList} user={user} activateUser={user => ActivateUser(user)} deactivateUser={user => DeactivateUser(user)} />
+                                </>
+                            )}
                         </>
                     )}
                 </Container>

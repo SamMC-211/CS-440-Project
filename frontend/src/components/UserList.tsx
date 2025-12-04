@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import { Snackbar, Grow, Alert, Paper, List, ListSubheader, ListItem, Divider } from '@mui/material';
+import { Snackbar, Grow, Alert, Paper, List, ListSubheader, ListItem, Divider, Typography, ListItemText } from '@mui/material';
 import type { SnackbarCloseReason } from '@mui/material/Snackbar';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -19,7 +19,6 @@ export default function UserList({ users = [], user, activateUser, deactivateUse
 
     const visibleUsers = useMemo(() => {
         return  Array.isArray(users) ? users : [];
-
         
     }, [users, user]);
 
@@ -28,7 +27,7 @@ export default function UserList({ users = [], user, activateUser, deactivateUse
  return (
     <Paper elevation={3} sx={{ flexGrow: 1, margin: 'auto' }}>
             <List
-                sx={{ maxHeight: 480, overflow: 'auto' }}
+                sx={{ maxHeight: 1000, overflow: 'auto' }}
                 subheader={
                     <ListSubheader component='div' sx={{ bgcolor: 'background.paper' }}>
                         { "UserData" }
@@ -36,7 +35,9 @@ export default function UserList({ users = [], user, activateUser, deactivateUse
                 }
             >
                 {visibleUsers.map((a, i) => {
-                    const key = `${a.userID} | ${a.email} ${a.firstName} ${a.lastName} ${a.role} ${i}`;
+                    const key = `${a.userID} | ${a.email}  | `;
+                    const two =  `${a.firstName} ${a.lastName}  | `;
+                    const role = `${a.role} `;
                     const showActivate = a.isActive == 0;
 
                     return (
@@ -46,15 +47,32 @@ export default function UserList({ users = [], user, activateUser, deactivateUse
                                 secondaryAction={
                                     showActivate ? (
                                         <Button variant='contained' size='small' onClick={() => activateUser!(a)}>
-                                            Book
+                                            Activate
                                         </Button>
                                     ) : (
                                         <Button variant='contained' size='small' onClick={() => deactivateUser!(a)}>
-                                            Cancel
+                                            Deactivate
                                         </Button>
                                     )
                                 }
                             >
+                                <ListItemText
+                                    primary={
+                                        <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                                            {key}
+                                        </Typography>
+                                    }
+                                    secondary={
+                                        <>
+                                            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                                                {two}
+                                            </Typography>
+                                            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                                                {role}
+                                            </Typography>
+                                        </>
+                                    }
+                                />
                             </ListItem>
                             {i < users.length - 1 && <Divider component='li' />}
                         </React.Fragment>
