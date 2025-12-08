@@ -267,7 +267,7 @@ app.get('/api/users', (req, res) => {
         } else if (rows) {
             return res.json({
                 success: true,
-                results: rows.map(row => {userID: row.}),
+                results: rows.map(row => {userID: row.user_id}),
                 count: rows.length,
             }); //Wrap rows in object, useful for including metadata
             // return res.json(rows);
