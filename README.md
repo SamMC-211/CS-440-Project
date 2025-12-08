@@ -105,3 +105,19 @@
 - Remove infinite loading from create appointment
 - Error check time and date
 - display booked and created appointments
+
+## Demo 3 To-Do
+- Admin
+    - Search all appointments
+    - Search all appointments under User
+        - Search Bar (autocomplete?)
+    - Cancel all of Provider appointments
+        - Notify User
+    - Inactivate User
+        - Prevent Login
+        - User appointments canceled
+        - Notify Service Provider
+        - PROVIDER (Cancels All Appointment, )
+        - USER (Cancels all appointments, )
+    - Generate Monthly Report
+        - Show all user info 

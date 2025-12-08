@@ -149,10 +149,6 @@ app.post('/api/login', (req, res) => {
             return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
         }
 
-        if(row.is_active == 0) {
-            return res.status(401).json({ ok: false, message: 'User is inactive' });
-        }
-
         // Compare the supplied password with the hashed password in DB
         bcrypt.compare(password, row.password, (err, isMatch) => {
             if (err) {
@@ -165,12 +161,12 @@ app.post('/api/login', (req, res) => {
             }
 
             // Password matched — create session
-            req.session.user = { 
+            req.session.user = {
                 email: row.email,
                 user_id: row.user_id,
                 role: row.role,
                 first_name: row.first_name,
-                last_name: row.last_name
+                last_name: row.last_name,
             };
 
             console.log('Session just initialized:', req.session);
@@ -179,7 +175,6 @@ app.post('/api/login', (req, res) => {
         });
     });
 });
-
 
 // API: check current user (lets frontend check "am I logged in") (GET request from frontend)
 //Used by "RequireAuth"
@@ -255,13 +250,15 @@ app.post('/api/register', (req, res) => {
 //GET /api/users?limit=10&sort=lastname
 app.get('/api/users', (req, res) => {
     //Use query params passed in request route
-    const limit = parseInt(req.query.limit) || 40;
-    const sort = req.query.sort === 'last_name' ? 'last_name' : 'user_id'; //whitelist allowed sorting fields
+    const limit = parseInt(req.query.limit) || 10;
+    // const sort = req.query.sort === 'lastname' ? 'lastname' : 'user_id'; //whitelist allowed sorting fields (new line)
+    const sort = req.query.sort === 'lastname' ? 'lastname' : 'id';
 
     //Prevent SQL injection
-    const sql = `SELECT * FROM users ORDER BY ${sort} ASC LIMIT ?`; //column name "sort" cannot be passed as a param in db.all
+    // const sql = `SELECT * FROM users ORDER BY ${sort} ASC LIMIT ?`; //column name "sort" cannot be passed as a param in db.all
+    const sql2 = 'SELECT * FROM users ORDER BY role ASC, last_name ASC';
 
-    db.all(sql, [limit], (err, rows) => {
+    db.all(sql2, [], (err, rows) => {
         if (err) {
             return res.status(500).json({
                 success: false,
@@ -271,17 +268,8 @@ app.get('/api/users', (req, res) => {
         } else if (rows) {
             return res.json({
                 success: true,
-                results: rows.map(row => {
-                    return {
-                        userID: row.user_id,
-                        firstName: row.first_name,
-                        lastName: row.last_name,
-                        role: row.role,
-                        email: row.email,
-                        providerName: row.provider_name,
-                        isActive: row.is_active,
-                    };
-                }),
+                // results: rows.map(row => {userID: row.}), New line??
+                results: rows,
                 count: rows.length,
             }); //Wrap rows in object, useful for including metadata
             // return res.json(rows);
@@ -315,8 +303,8 @@ app.get('/api/users/active', (req, res) => {
     });
 });
 
-app.patch('/api/users/activate', (req, res) => { 
-    var userId = req.body.userID;
+app.patch('/api/users/activate', (req, res) => {
+    var userId = req.body;
 
     dbhelper.activateUser(userId, (err, results) => {
         if (err) {
@@ -331,8 +319,8 @@ app.patch('/api/users/activate', (req, res) => {
     });
 });
 
-app.patch('/api/users/deactivate', (req, res) => { 
-    var userId = req.body.userID;
+app.patch('/api/users/deactivate', (req, res) => {
+    var userId = req.body;
 
     dbhelper.deactivateUser(userId, (err, results) => {
         if (err) {
@@ -439,16 +427,17 @@ app.get('/api/appointments/all', (req, res) => {
     });
 });
 
-app.get('/api/appointments/booked/user', (req, res) => { //probably badly named endpoint
-    
+app.get('/api/appointments/booked/user', (req, res) => {
+    //probably badly named endpoint
+
     const { userID, minDate, maxDate, type, role } = req.query;
 
     if (role != 'admin') {
         res.status(301).json({
-                ok: false,
-                message: 'need to be an admin',
-                error: e.message,
-            });
+            ok: false,
+            message: 'need to be an admin',
+            error: e.message,
+        });
     }
 
     dbhelper.GetAppointmentsByBookedUser(userID, (err, results) => {
@@ -459,7 +448,6 @@ app.get('/api/appointments/booked/user', (req, res) => { //probably badly named 
                 error: err.message,
             });
         }
-
 
         try {
             const { userID, minDate, maxDate, type, role } = req.query;
@@ -512,6 +500,8 @@ app.get('/api/appointments', (req, res) => {
             });
         }
 
+        console.log('Filter:' + results);
+
         try {
             const { userID, minDate, maxDate, type, role } = req.query;
 
@@ -553,81 +543,6 @@ app.get('/api/appointments', (req, res) => {
     });
 });
 
-app.get('/api/appointments/summary', (req, res) => {
-    dbhelper.getAppointmentsForList((err, results) => {
-        if (err) {
-            return res.status(500).json({
-                ok: false,
-                message: 'Error retrieving appointments',
-                error: err.message,
-            });
-        }
-
-        try {
-            const { minDate, maxDate, } = req.query;
-            let data = {
-                bookedCount: 0,
-                canceledCount: 0,
-                numAppointments: 0,
-                numConsult: 0,
-                numConsultBooked: 0,
-                numTraining: 0,
-                numTrainingBooked: 0,
-                numFollow: 0,
-                numFollowBooked: 0,
-            }
-
-            // Parse date filters
-            const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : new Date();
-            const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
-
-            // Convert result dates to Date objects for comparison
-            for (let i = 0; i < results.length; i++) {
-                results[i].date = StringToDate(results[i].date);
-            }
-
-            if (min) {
-                results = results.filter((r) => r.date >= min);
-            }
-
-            if (max) {
-                results = results.filter((r) => r.date <= max);
-            }
-
-            console.log("results", results);
-
-            // Apply filters
-            data.numAppointments = results.length;
-            data.numAppointments = results.filter((r) => r.status == 'booked').length;
-            data.numAppointments = results.filter((r) => r.status == 'cancelled').length;
-
-            
-
-            console.log("results too", results);
-            data.numConsult = results.filter((r) => r.appt_type == 'Consultation').length;
-            data.numTraining = results.filter((r) => r.appt_type == 'Training').length;
-            data.numFollow = results.filter((r) => r.appt_type == 'Follow-up').length;
-            
-            data.numConsult = results.filter((r) => r.appt_type == 'Consultation' && r.status == 'booked').length;
-            data.numTraining = results.filter((r) => r.appt_type == 'Training' && r.status == 'booked').length;
-            data.numFollow = results.filter((r) => r.appt_type == 'Follow-up' && r.status == 'booked').length;
-
-            // Convert date back to string for response
-            for (let i = 0; i < results.length; i++) {
-                results[i].date = DateToString(results[i].date);
-            }
-
-            return res.status(200).json({ ok: true, data: data });
-        } catch (e) {
-            return res.status(500).json({
-                ok: false,
-                message: 'Error processing appointment data',
-                error: e.message,
-            });
-        }
-    });
-});
-
 app.get('/api/appointments/booked', (req, res) => {
     dbhelper.getAppointmentsForList((err, results) => {
         if (err) {
@@ -640,10 +555,10 @@ app.get('/api/appointments/booked', (req, res) => {
 
         try {
             const { userID } = req.query;
-           // console.log('[DEBUG] Query parameters:', req.query);
+            console.log('[DEBUG] Query parameters:', req.query);
 
             const userIdNum = Number(userID);
-           // console.log('[DEBUG] Parsed userID as number:', userIdNum);
+            console.log('[DEBUG] Parsed userID as number:', userIdNum);
 
             // Convert result dates to Date objects for comparison
             for (let i = 0; i < results.length; i++) {
@@ -654,7 +569,7 @@ app.get('/api/appointments/booked', (req, res) => {
             for (let i = 0; i < results.length; i++) {
                 results[i].date = DateToString(results[i].date);
             }
-           // console.log('Booked Results (Post Filter/Conversion):', results);
+            console.log('Booked Results (Post Filter/Conversion):', results);
 
             return res.status(200).json({ ok: true, results });
         } catch (e) {

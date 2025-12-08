@@ -3,7 +3,6 @@ const db = require('./db');
 const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10;
 
-
 // ---------------- USERS ----------------
 
 // Create/register a new user or provider - no hashing used for password
@@ -30,13 +29,9 @@ function createUser(firstName, lastName, email, password, role, providerName, qu
             VALUES (?, ?, ?, ?, ?, ?, ?, 1)
         `;
 
-        db.run(
-            sql,
-            [firstName, lastName, email, hashedPassword, role, providerName, qualifications],
-            function (err) {
-                callback(err, { user_id: this?.lastID });
-            }
-        );
+        db.run(sql, [firstName, lastName, email, hashedPassword, role, providerName, qualifications], function (err) {
+            callback(err, { user_id: this?.lastID });
+        });
     });
 }
 
@@ -50,7 +45,6 @@ function deactivateUser(userId, callback) {
     db.run(sql, [userId], function (err) {
         callback(err, { changes: this?.changes });
     });
-
 }
 
 function activateUser(userId, callback) {
@@ -63,7 +57,6 @@ function activateUser(userId, callback) {
     db.run(sql, [userId], function (err) {
         callback(err, { changes: this?.changes });
     });
-
 }
 
 // Get a user by email
@@ -322,7 +315,7 @@ function getAppointmentsForList(callback) {
     });
 }
 
-function GetAppointmentsByBookedUser(userId, callback) {
+function getAppointmentsByBookedUser(userId, callback) {
     const sql = `
         SELECT
             appointments.appt_id      AS appt_id,
@@ -506,7 +499,6 @@ function cancelAllAppointmentsByProvider(providerId, callback) {
     });
 }
 
-
 // ---------------- NOTIFICATIONS ----------------
 // Get all notifications
 function getNotifications(callback) {
@@ -603,7 +595,6 @@ function clearAllData() {
     DELETE FROM notifications;
 	`;
     db.run(sql2);
-
 }
 
 function createAdmin() {
@@ -638,7 +629,7 @@ function insertPreviousDemoAppointments() {
         ['11', 'Hair Cut', '3:00', '4:00', '1', 'Training', '11/22/2025', 'Training'],
         ['11', 'Color', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training'],
         ['12', 'Cleansing Facial', '3:00', '4:00', '1', 'Training', '11/22/2025', 'Training'],
-        ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training']
+        ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training'],
     ];
 
     // Insert each row
@@ -667,7 +658,6 @@ function resetForDemoTest() {
     db.run(sql2);
 
     insertPreviousDemoAppointments();
-
 }
 
 function migratePasswordsToBcrypt(callback) {
@@ -703,22 +693,19 @@ function migratePasswordsToBcrypt(callback) {
                 });
 
                 updatedCount++;
-
             } catch (err) {
-                return callback(err,  { message: 'Appointment booked successfully', });
+                return callback(err, { message: 'Appointment booked successfully' });
             }
         }
 
-        callback(err,  { message: 'Appointment booked successfully', });
+        callback(err, { message: 'Appointment booked successfully' });
     });
 }
 
-
 module.exports = {
     migratePasswordsToBcrypt,
-    GetAppointmentsByBookedUser,
+    getAppointmentsByBookedUser,
     getAppointmentsByProvider,
-    GetAppointmentsByBookedUser,
     cancelAllAppointmentsByUser,
     cancelAllAppointmentsByProvider,
     resetForDemoTest,
