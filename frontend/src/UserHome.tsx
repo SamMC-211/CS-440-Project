@@ -850,9 +850,18 @@ function UserHome() {
                                 </>
                             )}
                             {toggleButton == 1 && (
-                                <>
+                                <Paper
+                                elevation={3}
+                                sx={{
+                                    padding: 3,
+                                    maxWidth: 700,
+                                    margin: 'auto',
+                                    mt: 4,
+                                    borderRadius: 3,
+                                }}
+                                >
                                     <UserList users={userList} user={user} activateUser={user => ActivateUser(user)} deactivateUser={user => DeactivateUser(user)} />
-                                </>
+                                </Paper>
                             )}
                             {(toggleButton == 2 && (
 
@@ -866,7 +875,20 @@ function UserHome() {
                                     borderRadius: 3,
                                 }}
                             >
-                                <Stack direction='row' spacing={2} sx={{ p: 2, background: 'white' }}>
+                                <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                Appointment Summary
+                            </Typography>
+
+                                <Stack   direction="row"
+                                spacing={2}
+                                sx={{
+                                    p: 2,
+                                    background: 'white',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    border: '1px solid #ccc',
+                                    borderRadius: 2,
+                                }}>
                                     <LocalizationProvider dateAdapter={AdapterDateFns}>
                                         <DatePicker
                                             label='After'
@@ -901,10 +923,6 @@ function UserHome() {
                                         />
                                     </LocalizationProvider>
                                 </Stack>
-
-                            <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
-                                Appointment Statistics
-                            </Typography>
 
                                 <TableContainer component={Paper} sx={{ maxWidth: 600, margin: "auto", mt: 4 }}>
             <Typography variant="h6" sx={{ p: 2, pb: 0 }}>

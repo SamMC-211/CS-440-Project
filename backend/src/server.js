@@ -598,8 +598,8 @@ app.get('/api/appointments/summary', (req, res) => {
 
             // Apply filters
             data.numAppointments = results.length;
-            data.numAppointments = results.filter((r) => r.status == 'booked').length;
-            data.numAppointments = results.filter((r) => r.status == 'cancelled').length;
+            data.bookedCount = results.filter((r) => r.status == 'booked').length;
+            data.canceledCount = results.filter((r) => r.status == 'cancelled').length;
 
             
 
@@ -608,9 +608,9 @@ app.get('/api/appointments/summary', (req, res) => {
             data.numTraining = results.filter((r) => r.appt_type == 'Training').length;
             data.numFollow = results.filter((r) => r.appt_type == 'Follow-up').length;
             
-            data.numConsult = results.filter((r) => r.appt_type == 'Consultation' && r.status == 'booked').length;
-            data.numTraining = results.filter((r) => r.appt_type == 'Training' && r.status == 'booked').length;
-            data.numFollow = results.filter((r) => r.appt_type == 'Follow-up' && r.status == 'booked').length;
+            data.numConsultBooked = results.filter((r) => r.appt_type == 'Consultation' && r.status == 'booked').length;
+            data.numTrainingBooked = results.filter((r) => r.appt_type == 'Training' && r.status == 'booked').length;
+            data.numFollowBooked = results.filter((r) => r.appt_type == 'Follow-up' && r.status == 'booked').length;
 
             // Convert date back to string for response
             for (let i = 0; i < results.length; i++) {
