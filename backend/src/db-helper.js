@@ -616,27 +616,41 @@ function createAdmin() {
 
 function insertPreviousDemoAppointments() {
     const sql = `
-    INSERT INTO appointments (provider_id, title, start_time, end_time, room_id, appt_type, date, description, status, is_booked)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'booked', 1)
-	`;
+        INSERT INTO appointments (
+            provider_id,
+            title,
+            start_time,
+            end_time,
+            room_id,
+            appt_type,
+            "date",
+            description,
+            status,
+            is_booked
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'booked', 1)
+    `;
 
-    /*
-    / Id's to user
-    / 11: abby anderson
-    / 12: katie johnson
-    */
+    // Demo appointment rows
+    const rows = [
+        ['11', 'Hair Highlight', '3:00', '4:00', '1', 'Training', '10/15/2025', 'Training'],
+        ['12', 'Face Moisturizer Treatment', '3:00', '4:00', '2', 'Training', '10/15/2025', 'Training'],
+        ['11', 'Hair Cut', '3:00', '4:00', '1', 'Training', '11/22/2025', 'Training'],
+        ['11', 'Color', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training'],
+        ['12', 'Cleansing Facial', '3:00', '4:00', '1', 'Training', '11/22/2025', 'Training'],
+        ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training']
+    ];
 
-    db.run(sql, ['11', 'Hair Highlight', '3:00', '4:00', '1', 'training', '10/15/2025', 'training']);
-
-    db.run(sql, ['12', 'Face Moisterizer Treatment', '3:00', '4:00', '2', 'training', '10/15/2025', 'Face Treatment']);
-
-    db.run(sql, ['11', 'Hair Cut', '3:00', '4:00', '1', 'training', '11/22/2025', 'training']);
-
-    db.run(sql, ['11', 'Color', '4:00', '5:00', '1', 'training', '10/15/2025', 'training']);
-
-    db.run(sql, ['12', 'Cleansing Facial', '3:00', '4:00', '1', 'training', '11/22/2025', 'training']);
-
-    db.run(sql, ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'training', '10/15/2025', 'training']);
+    // Insert each row
+    rows.forEach((params, index) => {
+        db.run(sql, params, function (err) {
+            if (err) {
+                console.error(`Insert ${index + 1} FAILED:`, err.message);
+            } else {
+                console.log(`Insert ${index + 1} OK (rowid: ${this.lastID})`);
+            }
+        });
+    });
 }
 
 function resetForDemoTest() {

@@ -16,6 +16,12 @@ import {
     Paper,
     Snackbar,
     Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
@@ -49,7 +55,7 @@ import UserList from './components/UserList';
 //Toggle Button Names by User type
 const userToggleButtons = ['Dashboard', 'Search Appointments'];
 const providerToggleButtons = ['Dashboard', 'Create Appointment', 'View Appointments'];
-const adminToggleButtons = ['Admin View', 'User Data'];
+const adminToggleButtons = ['Admin View', 'User Data', 'Summary Tool'];
 
 const initialUser: User = {
     userID: null,
@@ -72,6 +78,17 @@ const initAppointmentRange = {
     beforeDate: '',
     afterDate: '',
 };
+const initSumaryData = {
+    bookedCount: 'please input date range to get data',
+    canceledCount: 'please input date range to get data',
+    numAppointments: 'please input date range to get data',
+    numConsult: 'please input date range to get data',
+    numConsultBooked: 'please input date range to get data',
+    numTraining: 'please input date range to get data',
+    numTrainingBooked: 'please input date range to get data',
+    numFollow: 'please input date range to get data',
+    numFollowBooked: 'please input date range to get data',
+}
 
 function UserHome() {
     const [user, setUser] = useState(initialUser);
@@ -87,6 +104,7 @@ function UserHome() {
     const [appointment, setAppointment] = useState(initialAppointment);
 
     const [appointmentRange, setAppointmentRange] = useState(initAppointmentRange);
+    const [summaryData, setSummaryData] = useState(initSumaryData);
     const [appointmentSearchType, setSearchAppointmentType] = useState('');
 
     const [rows, setRows] = useState([]);
@@ -337,23 +355,24 @@ function UserHome() {
         }
     }
 
-    async function GetAppointmentsByDateRangeAndType(type: any = null, minDate: any = null, maxDate: any = null) {
+    async function GetAppointmentsSummaryByDateRange(minDate: any = null, maxDate: any = null) {
         setError(null);
+
+        if((minDate == null && appointmentRange.afterDate == null) || (maxDate == null && appointmentRange.beforeDate == null)){
+            return;
+        }
 
         setLoading(true);
         //Tries a post request
         try {
-            console.log('here');
-
             const query = new URLSearchParams({
                 userID: user.userID?.toString() ?? '',
                 minDate: minDate ?? appointmentRange.afterDate,
                 maxDate: maxDate ?? appointmentRange.beforeDate,
-                type: type ?? appointmentSearchType,
                 role: user.role,
             });
 
-            const res = await fetch(`/api/appointments?${query.toString()}`, {
+            const res = await fetch(`/api/appointments/summary?${query.toString()}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -361,11 +380,11 @@ function UserHome() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.message || 'Failed to get appointments.');
+                setError(data.message || 'Failed to get appointment summary');
                 return;
             }
             if (data.ok) {
-                setAppointmentList(data.results);
+                setSummaryData(data.data);
             } else {
                 setError(data.message);
             }
@@ -420,7 +439,6 @@ function UserHome() {
                 body: JSON.stringify({ userID: user.userID, role: user.role }),
             });
             const data = await res.json();
-            console.log("did it :)", data);
             getUserList();
         } catch (err) {
             setError('Network error');
@@ -437,7 +455,6 @@ function UserHome() {
                 body: JSON.stringify({ userID: user.userID, role: user.role }),
             });
             const data = await res.json();
-            console.log("did it :) 34323432", data);
             getUserList();
         } catch (err) {
             setError('Network error');
@@ -837,6 +854,122 @@ function UserHome() {
                                     <UserList users={userList} user={user} activateUser={user => ActivateUser(user)} deactivateUser={user => DeactivateUser(user)} />
                                 </>
                             )}
+                            {(toggleButton == 2 && (
+
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    padding: 3,
+                                    maxWidth: 700,
+                                    margin: 'auto',
+                                    mt: 4,
+                                    borderRadius: 3,
+                                }}
+                            >
+                                <Stack direction='row' spacing={2} sx={{ p: 2, background: 'white' }}>
+                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                        <DatePicker
+                                            label='After'
+                                            value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
+                                            onChange={(newValue) => {
+                                                if (newValue) {
+                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // match backend
+                                                    setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
+                                                    GetAppointmentsSummaryByDateRange(formattedDate, null);
+                                                } else {
+                                                    setAppointmentRange({ ...appointmentRange, afterDate: '' });
+                                                    GetAppointmentsSummaryByDateRange('', null);
+                                                }
+                                            }}
+                                        />
+                                    </LocalizationProvider>
+
+                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                        <DatePicker
+                                            label='Before'
+                                            value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
+                                            onChange={(newValue) => {
+                                                if (newValue) {
+                                                    const formattedDate = format(newValue, 'MM/dd/yyyy'); // match backend
+                                                    setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
+                                                    GetAppointmentsSummaryByDateRange(null, formattedDate);
+                                                } else {
+                                                    setAppointmentRange({ ...appointmentRange, beforeDate: '' });
+                                                    GetAppointmentsSummaryByDateRange(null, '');
+                                                }
+                                            }}
+                                        />
+                                    </LocalizationProvider>
+                                </Stack>
+
+                            <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                Appointment Statistics
+                            </Typography>
+
+                                <TableContainer component={Paper} sx={{ maxWidth: 600, margin: "auto", mt: 4 }}>
+            <Typography variant="h6" sx={{ p: 2, pb: 0 }}>
+                Appointment Statistics
+            </Typography>
+
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell><strong>Metric</strong></TableCell>
+                        <TableCell align="right"><strong>Value</strong></TableCell>
+                    </TableRow>
+                </TableHead>
+
+                <TableBody>
+                    <TableRow>
+                        <TableCell>Total Appointments</TableCell>
+                        <TableCell align="right">{summaryData.numAppointments}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Booked Count</TableCell>
+                        <TableCell align="right">{summaryData.bookedCount}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Canceled Count</TableCell>
+                        <TableCell align="right">{summaryData.canceledCount}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Consultations</TableCell>
+                        <TableCell align="right">{summaryData.numConsult}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Booked Consultations</TableCell>
+                        <TableCell align="right">{summaryData.numConsultBooked}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Training Sessions</TableCell>
+                        <TableCell align="right">{summaryData.numTraining}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Booked Training Sessions</TableCell>
+                        <TableCell align="right">{summaryData.numTrainingBooked}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Follow-Ups</TableCell>
+                        <TableCell align="right">{summaryData.numFollow}</TableCell>
+                    </TableRow>
+
+                    <TableRow>
+                        <TableCell>Booked Follow-Ups</TableCell>
+                        <TableCell align="right">{summaryData.numFollowBooked}
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+            </TableContainer>
+                        </Paper>
+                            ))}
                         </>
                     )}
                 </Container>
