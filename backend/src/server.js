@@ -149,6 +149,10 @@ app.post('/api/login', (req, res) => {
             return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
         }
 
+        if(row.is_active == 0) {
+            return res.status(401).json({ ok: false, message: 'User is inactive' });
+        }
+
         // Compare the supplied password with the hashed password in DB
         bcrypt.compare(password, row.password, (err, isMatch) => {
             if (err) {
@@ -251,8 +255,8 @@ app.post('/api/register', (req, res) => {
 //GET /api/users?limit=10&sort=lastname
 app.get('/api/users', (req, res) => {
     //Use query params passed in request route
-    const limit = parseInt(req.query.limit) || 10;
-    const sort = req.query.sort === 'lastname' ? 'lastname' : 'user_id'; //whitelist allowed sorting fields
+    const limit = parseInt(req.query.limit) || 40;
+    const sort = req.query.sort === 'last_name' ? 'last_name' : 'user_id'; //whitelist allowed sorting fields
 
     //Prevent SQL injection
     const sql = `SELECT * FROM users ORDER BY ${sort} ASC LIMIT ?`; //column name "sort" cannot be passed as a param in db.all
@@ -267,7 +271,17 @@ app.get('/api/users', (req, res) => {
         } else if (rows) {
             return res.json({
                 success: true,
-                results: rows.map(row => {userID: row.user_id}),
+                results: rows.map(row => {
+                    return {
+                        userID: row.user_id,
+                        firstName: row.first_name,
+                        lastName: row.last_name,
+                        role: row.role,
+                        email: row.email,
+                        providerName: row.provider_name,
+                        isActive: row.is_active,
+                    };
+                }),
                 count: rows.length,
             }); //Wrap rows in object, useful for including metadata
             // return res.json(rows);
@@ -302,7 +316,7 @@ app.get('/api/users/active', (req, res) => {
 });
 
 app.patch('/api/users/activate', (req, res) => { 
-    var userId = req.body
+    var userId = req.body.userID;
 
     dbhelper.activateUser(userId, (err, results) => {
         if (err) {
@@ -318,7 +332,7 @@ app.patch('/api/users/activate', (req, res) => {
 });
 
 app.patch('/api/users/deactivate', (req, res) => { 
-    var userId = req.body
+    var userId = req.body.userID;
 
     dbhelper.deactivateUser(userId, (err, results) => {
         if (err) {
@@ -498,8 +512,6 @@ app.get('/api/appointments', (req, res) => {
             });
         }
 
-        console.log('Filter:' + results);
-
         try {
             const { userID, minDate, maxDate, type, role } = req.query;
 
@@ -553,10 +565,10 @@ app.get('/api/appointments/booked', (req, res) => {
 
         try {
             const { userID } = req.query;
-            console.log('[DEBUG] Query parameters:', req.query);
+           // console.log('[DEBUG] Query parameters:', req.query);
 
             const userIdNum = Number(userID);
-            console.log('[DEBUG] Parsed userID as number:', userIdNum);
+           // console.log('[DEBUG] Parsed userID as number:', userIdNum);
 
             // Convert result dates to Date objects for comparison
             for (let i = 0; i < results.length; i++) {
@@ -567,7 +579,7 @@ app.get('/api/appointments/booked', (req, res) => {
             for (let i = 0; i < results.length; i++) {
                 results[i].date = DateToString(results[i].date);
             }
-            console.log('Booked Results (Post Filter/Conversion):', results);
+           // console.log('Booked Results (Post Filter/Conversion):', results);
 
             return res.status(200).json({ ok: true, results });
         } catch (e) {

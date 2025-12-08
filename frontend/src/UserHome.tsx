@@ -382,11 +382,11 @@ function UserHome() {
 
         stuff.forEach((guy, index) => {
             users[index] = {
-                userID: guy.user_id,
-                firstName: guy.first_name,
-                lastName: guy.last_name,
+                userID: guy.userID,
+                firstName: guy.firstName,
+                lastName: guy.lastName,
                 role: guy.role,
-                isActive: guy.is_active,
+                isActive: guy.isActive,
                 email: guy.email,
                 providerName: guy.provider_name,
             } as User
@@ -420,6 +420,7 @@ function UserHome() {
                 body: JSON.stringify({ userID: user.userID, role: user.role }),
             });
             const data = await res.json();
+            console.log("did it :)", data);
             getUserList();
         } catch (err) {
             setError('Network error');
@@ -436,6 +437,7 @@ function UserHome() {
                 body: JSON.stringify({ userID: user.userID, role: user.role }),
             });
             const data = await res.json();
+            console.log("did it :) 34323432", data);
             getUserList();
         } catch (err) {
             setError('Network error');

@@ -110,7 +110,6 @@ function bookAppointment(apptId, userId, callback) {
 
     db.get(getApptSql, [apptId], (err, appt) => {
         if (err) {
-            console.log('here', err);
             return callback(err);
         }
         if (!appt) return callback(new Error('Appointment not found.'));
