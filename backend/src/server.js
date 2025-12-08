@@ -543,6 +543,79 @@ app.get('/api/appointments', (req, res) => {
     });
 });
 
+app.get('/api/appointments/summary', (req, res) => {
+    dbhelper.getAppointmentsForList((err, results) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error retrieving appointments',
+                error: err.message,
+            });
+        }
+
+        try {
+            const { minDate, maxDate } = req.query;
+            let data = {
+                bookedCount: 0,
+                canceledCount: 0,
+                numAppointments: 0,
+                numConsult: 0,
+                numConsultBooked: 0,
+                numTraining: 0,
+                numTrainingBooked: 0,
+                numFollow: 0,
+                numFollowBooked: 0,
+            };
+
+            // Parse date filters
+            const min = !isNullOrWhiteSpace(minDate) ? StringToDate(minDate) : new Date();
+            const max = !isNullOrWhiteSpace(maxDate) ? StringToDate(maxDate) : null;
+
+            // Convert result dates to Date objects for comparison
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = StringToDate(results[i].date);
+            }
+
+            if (min) {
+                results = results.filter((r) => r.date >= min);
+            }
+
+            if (max) {
+                results = results.filter((r) => r.date <= max);
+            }
+
+            console.log('results', results);
+
+            // Apply filters
+            data.numAppointments = results.length;
+            data.bookedCount = results.filter((r) => r.status == 'booked').length;
+            data.canceledCount = results.filter((r) => r.status == 'cancelled').length;
+
+            console.log('results too', results);
+            data.numConsult = results.filter((r) => r.appt_type == 'Consultation').length;
+            data.numTraining = results.filter((r) => r.appt_type == 'Training').length;
+            data.numFollow = results.filter((r) => r.appt_type == 'Follow-up').length;
+
+            data.numConsultBooked = results.filter((r) => r.appt_type == 'Consultation' && r.status == 'booked').length;
+            data.numTrainingBooked = results.filter((r) => r.appt_type == 'Training' && r.status == 'booked').length;
+            data.numFollowBooked = results.filter((r) => r.appt_type == 'Follow-up' && r.status == 'booked').length;
+
+            // Convert date back to string for response
+            for (let i = 0; i < results.length; i++) {
+                results[i].date = DateToString(results[i].date);
+            }
+
+            return res.status(200).json({ ok: true, data: data });
+        } catch (e) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error processing appointment data',
+                error: e.message,
+            });
+        }
+    });
+});
+
 app.get('/api/appointments/booked', (req, res) => {
     dbhelper.getAppointmentsForList((err, results) => {
         if (err) {

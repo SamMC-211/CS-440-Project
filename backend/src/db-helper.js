@@ -626,10 +626,10 @@ function insertPreviousDemoAppointments() {
     const rows = [
         ['11', 'Hair Highlight', '3:00', '4:00', '1', 'Training', '10/15/2025', 'Training'],
         ['12', 'Face Moisturizer Treatment', '3:00', '4:00', '2', 'Training', '10/15/2025', 'Training'],
-        ['11', 'Hair Cut', '3:00', '4:00', '1', 'Training', '11/22/2025', 'Training'],
+        ['11', 'Hair Cut', '3:00', '4:00', '1', 'Consultation', '11/22/2025', 'Consultation'],
         ['11', 'Color', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training'],
-        ['12', 'Cleansing Facial', '3:00', '4:00', '1', 'Training', '11/22/2025', 'Training'],
-        ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'Training', '10/15/2025', 'Training'],
+        ['12', 'Cleansing Facial', '3:00', '4:00', '1', 'Consultation', '11/22/2025', 'Consultation'],
+        ['12', 'Acne Clearing Facial', '4:00', '5:00', '1', 'Follow-up', '10/15/2025', 'Follow-up'],
     ];
 
     // Insert each row
@@ -645,19 +645,18 @@ function insertPreviousDemoAppointments() {
 }
 
 function resetForDemoTest() {
-    clearAllData();
-    //except rooms and users
-    var sql = `
-    DELETE FROM appointments;
-	`;
-    db.run(sql);
+    // Delete appointments first
+    db.run(`DELETE FROM appointments;`, function (err) {
+        if (err) throw err;
 
-    var sql2 = `
-    DELETE FROM notifications;
-	`;
-    db.run(sql2);
+        // Then delete notifications
+        db.run(`DELETE FROM notifications;`, function (err) {
+            if (err) throw err;
 
-    insertPreviousDemoAppointments();
+            // Now insert previous demo appointments
+            insertPreviousDemoAppointments();
+        });
+    });
 }
 
 function migratePasswordsToBcrypt(callback) {
