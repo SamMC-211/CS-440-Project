@@ -355,10 +355,14 @@ function UserHome() {
         }
     }
 
+    function isNullOrWhiteSpace(str : String) {
+      return !str || str.trim().length === 0;
+    }
+
     async function GetAppointmentsSummaryByDateRange(minDate: any = null, maxDate: any = null) {
         setError(null);
 
-        if((minDate == null && appointmentRange.afterDate == null) || (maxDate == null && appointmentRange.beforeDate == null)){
+        if((isNullOrWhiteSpace(minDate) && isNullOrWhiteSpace(appointmentRange.afterDate)) || (isNullOrWhiteSpace(maxDate) && isNullOrWhiteSpace(appointmentRange.beforeDate))){
             return;
         }
 
