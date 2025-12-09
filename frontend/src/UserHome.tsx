@@ -878,10 +878,25 @@ function UserHome() {
                                         borderRadius: 3,
                                     }}
                                 >
-                                    <Stack direction='row' spacing={2} sx={{ p: 2, background: 'white' }}>
+                                    <Typography variant='h4' sx={{ mb: 2, fontWeight: 'bold' }}>
+                                        Appointment Summary
+                                    </Typography>
+
+                                    <Stack
+                                        direction='row'
+                                        spacing={2}
+                                        sx={{
+                                            p: 2,
+                                            background: 'white',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            border: '1px solid #ccc',
+                                            borderRadius: 2,
+                                        }}
+                                    >
                                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                                             <DatePicker
-                                                label='After'
+                                                label='Start Date'
                                                 value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
                                                 onChange={(newValue) => {
                                                     if (newValue) {
@@ -895,128 +910,77 @@ function UserHome() {
                                                 }}
                                             />
                                         </LocalizationProvider>
-
                                         <LocalizationProvider dateAdapter={AdapterDateFns}>
                                             <DatePicker
-                                                label='After'
-                                                value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
+                                                label='End Date'
+                                                value={appointmentRange.beforeDate ? new Date(appointmentRange.beforeDate) : null} // parse string back to Date for picker
                                                 onChange={(newValue) => {
                                                     if (newValue) {
                                                         const formattedDate = format(newValue, 'MM/dd/yyyy'); // match backend
-                                                        setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
-                                                        GetAppointmentsSummaryByDateRange(formattedDate, null);
+                                                        setAppointmentRange({ ...appointmentRange, beforeDate: formattedDate });
+                                                        GetAppointmentsSummaryByDateRange(null, formattedDate);
                                                     } else {
-                                                        setAppointmentRange({ ...appointmentRange, afterDate: '' });
-                                                        GetAppointmentsSummaryByDateRange('', null);
+                                                        setAppointmentRange({ ...appointmentRange, beforeDate: '' });
+                                                        GetAppointmentsSummaryByDateRange(null, '');
                                                     }
                                                 }}
                                             />
                                         </LocalizationProvider>
                                     </Stack>
 
-                                    <Paper
-                                        elevation={3}
-                                        sx={{
-                                            padding: 3,
-                                            maxWidth: 700,
-                                            margin: 'auto',
-                                            mt: 4,
-                                            borderRadius: 3,
-                                        }}
-                                    >
-                                        <Typography variant='h4' sx={{ mb: 2, fontWeight: 'bold' }}>
-                                            Appointment Summary
+                                    <TableContainer component={Paper} sx={{ maxWidth: 600, margin: 'auto', mt: 4 }}>
+                                        <Typography variant='h6' sx={{ p: 2, pb: 0 }}>
+                                            Appointment Statistics
                                         </Typography>
+                                        <Table>
+                                            <TableBody>
+                                                <TableRow>
+                                                    <TableCell>Total Appointments</TableCell>
+                                                    <TableCell align='right'>{summaryData.numAppointments}</TableCell>
+                                                </TableRow>
 
-                                        <Stack
-                                            direction='row'
-                                            spacing={2}
-                                            sx={{
-                                                p: 2,
-                                                background: 'white',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                border: '1px solid #ccc',
-                                                borderRadius: 2,
-                                            }}
-                                        >
-                                            {/* <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                                    <DatePicker
-                                                        label='After'
-                                                        value={appointmentRange.afterDate ? new Date(appointmentRange.afterDate) : null} // parse string back to Date for picker
-                                                        onChange={(newValue) => {
-                                                            if (newValue) {
-                                                                const formattedDate = format(newValue, 'MM/dd/yyyy'); // match backend
-                                                                setAppointmentRange({ ...appointmentRange, afterDate: formattedDate });
-                                                                GetAppointmentsSummaryByDateRange(formattedDate, null);
-                                                            } else {
-                                                                setAppointmentRange({ ...appointmentRange, afterDate: '' });
-                                                                GetAppointmentsSummaryByDateRange('', null);
-                                                            }
-                                                        }}
-                                                    />
-                                                </LocalizationProvider> */}
+                                                <TableRow>
+                                                    <TableCell>Booked Count</TableCell>
+                                                    <TableCell align='right'>{summaryData.bookedCount}</TableCell>
+                                                </TableRow>
 
-                                            <Typography variant='h5' sx={{ mb: 2, fontWeight: 'bold' }}>
-                                                Appointment Statistics
-                                            </Typography>
+                                                <TableRow>
+                                                    <TableCell>Canceled Count</TableCell>
+                                                    <TableCell align='right'>{summaryData.canceledCount}</TableCell>
+                                                </TableRow>
 
-                                            <TableContainer component={Paper} sx={{ maxWidth: 600, margin: 'auto', mt: 4 }}>
-                                                <Typography variant='h6' sx={{ p: 2, pb: 0 }}>
-                                                    Appointment Statistics
-                                                </Typography>
-                                                <Table>
-                                                    <TableBody>
-                                                        <TableRow>
-                                                            <TableCell>Total Appointments</TableCell>
-                                                            <TableCell align='right'>{summaryData.numAppointments}</TableCell>
-                                                        </TableRow>
+                                                <TableRow>
+                                                    <TableCell>Consultations</TableCell>
+                                                    <TableCell align='right'>{summaryData.numConsult}</TableCell>
+                                                </TableRow>
 
-                                                        <TableRow>
-                                                            <TableCell>Booked Count</TableCell>
-                                                            <TableCell align='right'>{summaryData.bookedCount}</TableCell>
-                                                        </TableRow>
+                                                <TableRow>
+                                                    <TableCell>Booked Consultations</TableCell>
+                                                    <TableCell align='right'>{summaryData.numConsultBooked}</TableCell>
+                                                </TableRow>
 
-                                                        <TableRow>
-                                                            <TableCell>Canceled Count</TableCell>
-                                                            <TableCell align='right'>{summaryData.canceledCount}</TableCell>
-                                                        </TableRow>
+                                                <TableRow>
+                                                    <TableCell>Training Sessions</TableCell>
+                                                    <TableCell align='right'>{summaryData.numTraining}</TableCell>
+                                                </TableRow>
 
-                                                        <TableRow>
-                                                            <TableCell>Consultations</TableCell>
-                                                            <TableCell align='right'>{summaryData.numConsult}</TableCell>
-                                                        </TableRow>
+                                                <TableRow>
+                                                    <TableCell>Booked Training Sessions</TableCell>
+                                                    <TableCell align='right'>{summaryData.numTrainingBooked}</TableCell>
+                                                </TableRow>
 
-                                                        <TableRow>
-                                                            <TableCell>Booked Consultations</TableCell>
-                                                            <TableCell align='right'>{summaryData.numConsultBooked}</TableCell>
-                                                        </TableRow>
+                                                <TableRow>
+                                                    <TableCell>Follow-Ups</TableCell>
+                                                    <TableCell align='right'>{summaryData.numFollow}</TableCell>
+                                                </TableRow>
 
-                                                        <TableRow>
-                                                            <TableCell>Training Sessions</TableCell>
-                                                            <TableCell align='right'>{summaryData.numTraining}</TableCell>
-                                                        </TableRow>
-
-                                                        <TableRow>
-                                                            <TableCell>Booked Training Sessions</TableCell>
-                                                            <TableCell align='right'>{summaryData.numTrainingBooked}</TableCell>
-                                                        </TableRow>
-
-                                                        <TableRow>
-                                                            <TableCell>Follow-Ups</TableCell>
-                                                            <TableCell align='right'>{summaryData.numFollow}</TableCell>
-                                                        </TableRow>
-
-                                                        <TableRow>
-                                                            <TableCell>Booked Follow-Ups</TableCell>
-                                                            <TableCell align='right'>{summaryData.numFollowBooked}</TableCell>
-                                                        </TableRow>
-                                                    </TableBody>
-                                                </Table>
-                                            </TableContainer>
-                                        </Stack>
-                                    </Paper>
-                                    {/* </Stack> */}
+                                                <TableRow>
+                                                    <TableCell>Booked Follow-Ups</TableCell>
+                                                    <TableCell align='right'>{summaryData.numFollowBooked}</TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
                                 </Paper>
                             )}
                         </>
