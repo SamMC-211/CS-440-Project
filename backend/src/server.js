@@ -599,14 +599,12 @@ app.get('/api/appointments/summary', (req, res) => {
                 results = results.filter((r) => r.date <= max);
             }
 
-            console.log('results', results);
 
             // Apply filters
             data.numAppointments = results.length;
             data.bookedCount = results.filter((r) => r.status == 'booked').length;
             data.canceledCount = results.filter((r) => r.status == 'cancelled').length;
 
-            console.log('results too', results);
             data.numConsult = results.filter((r) => r.appt_type == 'Consultation').length;
             data.numTraining = results.filter((r) => r.appt_type == 'Training').length;
             data.numFollow = results.filter((r) => r.appt_type == 'Follow-up').length;

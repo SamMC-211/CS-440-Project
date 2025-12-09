@@ -471,10 +471,10 @@ function cancelAllAppointmentsByProvider(userID, callback) {
     `;
 
     db.serialize(() => {
-        db.run(notifySql, [providerId], function (err) {
+        db.run(notifySql, [userID], function (err) {
             if (err) return callback(err);
 
-            db.run(updateSql, [providerId], function (err2) {
+            db.run(updateSql, [userID], function (err2) {
                 if (err2) return callback(err2);
 
                 callback(null, {
