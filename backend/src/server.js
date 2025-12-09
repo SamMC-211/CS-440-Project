@@ -14,12 +14,6 @@ const { get } = require('http');
 const app = express(); //create express app
 const PORT = process.env.PORT || 4000; //Set port to 4000
 
-// -- Static "users" (for demo only). Do NOT use plaintext passwords in production.
-const USERS = [
-    { username: 'admin', password: 'password123', displayName: 'Admin User' },
-    { username: 'sam', password: 'letmein', displayName: 'Sam' },
-];
-
 // ================================Session Middleware=====================================================
 app.use(express.json()); //Lets express parse incoming json (without it req.body would be undefined)
 
@@ -42,53 +36,9 @@ app.use(
 );
 
 // ================================TODO: DELETE=====================================================
-// dbhelper.createRoom(101, () => {});
-// dbhelper.createRoom(102, () => {});
-// dbhelper.createRoom(103, () => {});
-// dbhelper.clearAllData();
 
-// dbhelper.createUser(
-//     'Sam',
-//     'Christenson',
-//     'sammc@gmail.com',
-//     'password',
-//     'admin',
-//     '',
-//     '',
-//     function (err) {
-//         console.log('Error' + err);
-//     }
-// );
-
-// const sqla = `
-//     INSERT INTO users (first_name, last_name, email, password, role, provider_name, qualifications, is_active)
-// 		VALUES (?, ?, ?, ?, ?, ?, ?, 1)`;
-
-// db.run(sqla, [
-//     'Sam',
-//     'Christenson',
-//     'sammc@gmail.com',
-//     'password',
-//     'admin',
-//     '',
-//     '',
-// ]);
-// dbhelper.createAdmin();
 // dbhelper.insertPreviousDemoAppointments();
-
-const sql = `
-        UPDATE appointments 
-        SET provider_id = 11
-        WHERE appt_id = 16
-	`;
-const sql2 = `
-        UPDATE appointments 
-        SET provider_id = 12
-        WHERE appt_id = 17
-	`;
-// will need to change first value to id of Abby
-// db.run(sql);
-// db.run(sql2);
+dbhelper.resetForDemoTest();
 
 // ================================Login=====================================================
 

@@ -35,26 +35,26 @@ function createUser(firstName, lastName, email, password, role, providerName, qu
     });
 }
 
-function deactivateUser(userId, callback) {
+function deactivateUser(userID, callback) {
     const sql = `
         UPDATE users
         SET is_active = 0
         WHERE user_id = ?
     `;
 
-    db.run(sql, [userId], function (err) {
+    db.run(sql, [userID], function (err) {
         callback(err, { changes: this?.changes });
     });
 }
 
-function activateUser(userId, callback) {
+function activateUser(userID, callback) {
     const sql = `
         UPDATE users
         SET is_active = 1
         WHERE user_id = ?
     `;
 
-    db.run(sql, [userId], function (err) {
+    db.run(sql, [userID], function (err) {
         callback(err, { changes: this?.changes });
     });
 }
@@ -181,7 +181,7 @@ function cancelAppointment(userID, apptId, callback) {
     const createNotifSql = `
         INSERT INTO notifications (user_id, time, message)
         SELECT ?, datetime('now','localtime'),
-            'Appointment (' || title || ') was cancelled.'
+            'Appointment (' || title || ') for ' || date || ' was cancelled.'
         FROM appointments
         WHERE appt_id = ?
     `;
@@ -413,7 +413,7 @@ function getAppointmentsByType(apptType, callback) {
     });
 }
 
-function cancelAllAppointmentsByUser(userId, callback) {
+function cancelAllAppointmentsByUser(userID, callback) {
     const updateSql = `
         UPDATE appointments
         SET user_id = NULL,
@@ -427,37 +427,30 @@ function cancelAllAppointmentsByUser(userId, callback) {
         INSERT INTO notifications (user_id, time, message)
         SELECT provider_id,
                datetime('now','localtime'),
-               'This user's booking for appointment (' || title || ') was cancelled by an admin.'
+               'This user''s booking for appointment (' || title || ') on ' || date || ' was cancelled by an admin.'
         FROM appointments
         WHERE user_id = ?
           AND provider_id IS NOT NULL
+          AND status != 'completed'
     `;
 
     db.serialize(() => {
-        db.run(updateSql, [userId], function (err) {
+        db.run(notifySql, [userID], function (err) {
             if (err) return callback(err);
 
-            const affected = this.changes;
-
-            db.run(notifySql, function (err2) {
-                if (err2) {
-                    return callback(null, {
-                        ok: true,
-                        cancelled: affected,
-                        notifError: err2.message,
-                    });
-                }
+            db.run(updateSql, [userID], function (err2) {
+                if (err2) return callback(err2);
 
                 callback(null, {
                     ok: true,
-                    cancelled: affected,
+                    cancelled: this.changes,
                 });
             });
         });
     });
 }
 
-function cancelAllAppointmentsByProvider(providerId, callback) {
+function cancelAllAppointmentsByProvider(userID, callback) {
     const updateSql = `
         UPDATE appointments
         SET user_id = NULL,
@@ -471,7 +464,7 @@ function cancelAllAppointmentsByProvider(providerId, callback) {
         INSERT INTO notifications (user_id, time, message)
         SELECT user_id,
                datetime('now','localtime'),
-               'Appointment (' || title || ') was cancelled.'
+               'Appointment (' || title || ') on ' || date || 'was cancelled.'
         FROM appointments
         WHERE provider_id = ?
           AND user_id IS NOT NULL
@@ -567,17 +560,6 @@ function cancelAppointmentUpdated(apptId, callback) {
     });
 }
 
-function providerCancelAppointmentUpdated(apptId, callback) {
-    const sql = `
-		UPDATE appointments
-		SET user_id = NULL, is_booked = 1, status = 'cancelled'
-		WHERE appt_id = ?
-	`;
-    db.run(sql, [apptId], function (err) {
-        callback(err, { changes: this?.changes });
-    });
-}
-
 function clearAllData() {
     //except rooms and users
     var sql = `
@@ -613,7 +595,7 @@ function insertPreviousDemoAppointments() {
             status,
             is_booked
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'booked', 1)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', 1)
     `;
 
     // Demo appointment rows

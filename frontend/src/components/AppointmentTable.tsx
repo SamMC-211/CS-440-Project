@@ -206,7 +206,8 @@ export default function AppointmentTableSimple({ appointments, user, onBook, onC
                                         <TableCell
                                             align='right'
                                             sx={{
-                                                color: appointment.status === 'booked' ? 'green' : appointment.status === 'completed' ? 'blue' : appointment.status === 'cancelled' ? 'red' : 'inherit',
+                                                color:
+                                                    appointment.status === 'booked' ? 'green' : appointment.status === 'completed' ? 'blue' : appointment.status === 'cancelled' ? 'red' : appointment.status === 'open' ? 'green' : 'inherit',
                                             }}
                                         >
                                             {appointment.status}

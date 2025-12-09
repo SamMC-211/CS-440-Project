@@ -58,7 +58,7 @@ export default function TemporaryDrawer({ user }: Props) {
     };
 
     async function fetchUserNotifications() {
-        console.log('Get User Notifications For:' + user.userID);
+        // console.log('Get User Notifications For:' + user.userID);
         if (!user.userID) return;
 
         try {
@@ -98,7 +98,7 @@ export default function TemporaryDrawer({ user }: Props) {
                 {notifications.map((notif) => (
                     <ListItem key={notif.notif_id} disablePadding>
                         <ListItemButton>
-                            <ListItemText primary={notif.message} />
+                            <ListItemText primary={notif.message} secondary={'at ' + notif.time} />
                         </ListItemButton>
                     </ListItem>
                 ))}
