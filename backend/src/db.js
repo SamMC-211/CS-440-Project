@@ -6,6 +6,26 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
         console.error('Error opening databse:', err.message);
     } else {
         console.log('Connected to SQLite database');
+        //Update past appointment status
+        db.run(
+            `
+            UPDATE appointments
+            SET status = 'completed'
+            WHERE status != 'completed' AND status != 'cancelled'
+                AND date(
+                    substr(date, 7, 4) || '-' ||
+                    substr(date, 1, 2) || '-' ||
+                    substr(date, 4, 2)
+                ) < date('now')
+        `,
+            function (err) {
+                if (err) {
+                    console.error('Error updating past appointments:', err.message);
+                } else {
+                    console.log(`Updated ${this.changes} past appointments`);
+                }
+            }
+        );
         //display users
         db.all('SELECT * from users', (err, row) => {
             if (err) {
@@ -33,7 +53,7 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
             }
         });
         //display appointments
-        console.log('Notification Entries:');
+        console.log('Appointment Entries: ');
         db.all('SELECT * from appointments', (err, row) => {
             if (err) {
                 console.log('Error displaying appointments');
@@ -45,7 +65,7 @@ const db = new sqlite3.Database('./projdb.sqlite', (err) => {
                 console.log('Error displaying appointments');
             }
         });
-        console.log('Notification Entries:');
+        console.log('Notification Entries: ');
         db.all('SELECT * from notifications', (err, row) => {
             if (err) {
                 console.log('Error displaying notifications');

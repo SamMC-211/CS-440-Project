@@ -181,7 +181,7 @@ function cancelAppointment(userID, apptId, callback) {
     const createNotifSql = `
         INSERT INTO notifications (user_id, time, message)
         SELECT ?, datetime('now','localtime'),
-            'Appointment (' || title || ') was cancelled by the provider.'
+            'Appointment (' || title || ') was cancelled.'
         FROM appointments
         WHERE appt_id = ?
     `;
@@ -420,15 +420,16 @@ function cancelAllAppointmentsByUser(userId, callback) {
             is_booked = 0,
             status = 'open'
         WHERE user_id = ?
+            AND status != 'completed'
     `;
 
     const notifySql = `
         INSERT INTO notifications (user_id, time, message)
         SELECT provider_id,
                datetime('now','localtime'),
-               'A user cancelled one of their appointments.'
+               'This user's booking for appointment (' || title || ') was cancelled by an admin.'
         FROM appointments
-        WHERE user_id IS NULL
+        WHERE user_id = ?
           AND provider_id IS NOT NULL
     `;
 
@@ -460,39 +461,32 @@ function cancelAllAppointmentsByProvider(providerId, callback) {
     const updateSql = `
         UPDATE appointments
         SET user_id = NULL,
-            is_booked = 1,
+            is_booked = 0,
             status = 'cancelled'
         WHERE provider_id = ?
+            AND status != 'completed'
     `;
 
     const notifySql = `
         INSERT INTO notifications (user_id, time, message)
         SELECT user_id,
                datetime('now','localtime'),
-               'Your appointment was cancelled by the provider.'
+               'Appointment (' || title || ') was cancelled.'
         FROM appointments
         WHERE provider_id = ?
           AND user_id IS NOT NULL
     `;
 
     db.serialize(() => {
-        db.run(updateSql, [providerId], function (err) {
+        db.run(notifySql, [providerId], function (err) {
             if (err) return callback(err);
 
-            const affected = this.changes;
-
-            db.run(notifySql, [providerId], function (err2) {
-                if (err2) {
-                    return callback(null, {
-                        ok: true,
-                        cancelled: affected,
-                        notifError: err2.message,
-                    });
-                }
+            db.run(updateSql, [providerId], function (err2) {
+                if (err2) return callback(err2);
 
                 callback(null, {
                     ok: true,
-                    cancelled: affected,
+                    cancelled: this.changes,
                 });
             });
         });

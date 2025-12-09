@@ -1,6 +1,7 @@
 import { Button, Divider, List, ListItem, ListItemText, ListSubheader, Paper, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import type { Appointment, User } from '../types';
+import CustomHeader from './CustomHeader';
 
 type Props = {
     appointments?: Appointment[];
@@ -23,7 +24,7 @@ export default function SlotListSimple({ appointments = [], user, onBook, onCanc
         }
 
         // always exclude cancelled
-        return list.filter((a) => a.status !== 'cancelled');
+        return list.filter((a) => a.status !== 'cancelled' && a.status !== 'completed');
     }, [appointments, variant, user]);
 
     if (!visibleAppointments.length) {
@@ -40,7 +41,7 @@ export default function SlotListSimple({ appointments = [], user, onBook, onCanc
                 sx={{ maxHeight: 480, overflow: 'auto' }}
                 subheader={
                     <ListSubheader component='div' sx={{ bgcolor: 'background.paper' }}>
-                        {listTitle}
+                        <CustomHeader text={listTitle} margin={2} variant='h6' link={false} />
                     </ListSubheader>
                 }
             >

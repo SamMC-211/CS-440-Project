@@ -160,6 +160,10 @@ app.post('/api/login', (req, res) => {
                 return res.status(401).json({ ok: false, message: 'Invalid Credentials' });
             }
 
+            if (row.is_active === 0) {
+                return res.status(401).json({ ok: false, message: 'Your account has been disabled by an admin.' });
+            }
+
             // Password matched — create session
             req.session.user = {
                 email: row.email,
@@ -304,9 +308,9 @@ app.get('/api/users/active', (req, res) => {
 });
 
 app.patch('/api/users/activate', (req, res) => {
-    var userId = req.body;
+    const { userID, role } = req.body;
 
-    dbhelper.activateUser(userId, (err, results) => {
+    dbhelper.activateUser(userID, (err, results) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -320,17 +324,48 @@ app.patch('/api/users/activate', (req, res) => {
 });
 
 app.patch('/api/users/deactivate', (req, res) => {
-    var userId = req.body;
+    const { userID, role } = req.body;
 
-    dbhelper.deactivateUser(userId, (err, results) => {
+    console.log('Deactivate' + userID + role);
+
+    dbhelper.deactivateUser(userID, (err, results) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 message: 'Error deactivating user',
                 error: err.message,
             });
+        }
+
+        const finishSuccess = () => res.status(200).json({ ok: true, results });
+
+        if (role === 'provider') {
+            dbhelper.cancelAllAppointmentsByProvider(userID, (err) => {
+                if (err) {
+                    return res.status(500).json({
+                        ok: false,
+                        message: 'Error canceling provider appointments',
+                        error: err.message,
+                    });
+                }
+                finishSuccess();
+            });
+        } else if (role === 'user') {
+            dbhelper.cancelAllAppointmentsByUser(userID, (err) => {
+                if (err) {
+                    return res.status(500).json({
+                        ok: false,
+                        message: 'Error canceling user appointments',
+                        error: err.message,
+                    });
+                }
+                finishSuccess();
+            });
         } else {
-            return res.status(200).json({ ok: true, results: results });
+            return res.status(400).json({
+                ok: false,
+                message: 'Role must be "provider" or "user"',
+            });
         }
     });
 });
@@ -361,17 +396,21 @@ app.post('/api/appointments', (req, res) => {
     const conflictSql = `
       SELECT *
       FROM appointments
-      WHERE room_id = ?
+      WHERE status != 'cancelled'
         AND date = ?
         AND start_time = ?
         AND end_time = ?
+        AND (
+            room_id = ?
+            OR provider_id = ?
+        )
       LIMIT 1
     `;
 
     // console.log('Params: ' + roomID, date, times[0], times[1]);
 
     //Query for conflicting appointments
-    db.get(conflictSql, [roomID, date, times[0], times[1]], (err, conflictRow) => {
+    db.get(conflictSql, [date, times[0], times[1], roomID, userID], (err, conflictRow) => {
         if (err) {
             console.error('DB error checking conflicts:', err);
             return res.status(500).json({
@@ -427,12 +466,13 @@ app.get('/api/appointments/all', (req, res) => {
     });
 });
 
+//return appointments by user
 app.get('/api/appointments/booked/user', (req, res) => {
     //probably badly named endpoint
 
     const { userID, minDate, maxDate, type, role } = req.query;
 
-    if (role != 'admin') {
+    if (role !== 'admin') {
         res.status(301).json({
             ok: false,
             message: 'need to be an admin',
@@ -440,7 +480,7 @@ app.get('/api/appointments/booked/user', (req, res) => {
         });
     }
 
-    dbhelper.GetAppointmentsByBookedUser(userID, (err, results) => {
+    dbhelper.getAppointmentsByBookedUser(userID, (err, results) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
@@ -486,6 +526,31 @@ app.get('/api/appointments/booked/user', (req, res) => {
                 message: 'Error processing appointment data',
                 error: e.message,
             });
+        }
+    });
+});
+
+//return appointments by provider
+app.get('/api/appointments/provider', (req, res) => {
+    const { providerID, role } = req.query;
+
+    if (role !== 'admin') {
+        res.status(301).json({
+            ok: false,
+            message: 'Must be admin to access',
+            error: e.message,
+        });
+    }
+
+    dbhelper.getAppointmentsByProvider(providerID, (err, results) => {
+        if (err) {
+            return res.status(500).json({
+                ok: false,
+                message: 'Error retrieving provider appointments',
+                error: err.message,
+            });
+        } else {
+            return res.status(200).json({ ok: true, results });
         }
     });
 });
@@ -655,6 +720,7 @@ app.get('/api/appointments/booked', (req, res) => {
     });
 });
 
+//Book an appointment
 app.post('/api/appointments/book', (req, res) => {
     const { userID, apptID } = req.body;
     dbhelper.bookAppointment(apptID, userID, (err, results) => {
@@ -670,6 +736,7 @@ app.post('/api/appointments/book', (req, res) => {
     });
 });
 
+//Cancel an appointment (user/provider)
 app.post('/api/appointments/cancel', (req, res) => {
     const { userID, apptID } = req.body;
 

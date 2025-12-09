@@ -180,21 +180,7 @@ function UserHome() {
         getAppointments();
     }, []);
 
-    //Grab all of the appointments from the database
-    // useEffect(() => {
-    //     fetch('/api/appointments/all', { method: 'GET', credentials: 'include' })
-    //         .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
-    //         .then((data) => {
-    //             //data is whatever I passed to res.json on the express side
-    //             if (data.ok) {
-    //                 setAppointmentList(data.results as AppointmentObject[]);
-    //             } else {
-    //                 setError(data.message);
-    //             }
-    //         })
-    //         .catch((err) => console.error(err));
-    // }, [user]);
-
+    //get all appointments in a list
     async function getAppointments() {
         fetch('/api/appointments/all', { method: 'GET', credentials: 'include' })
             .then((res) => res.json()) //res(ponse) object recieved from fetch gets the .json method called on it, this method returns another promise (this time the parsed json)
@@ -444,6 +430,7 @@ function UserHome() {
             });
             const data = await res.json();
             getUserList();
+            getAppointments();
         } catch (err) {
             setError('Network error');
             console.log(err);
@@ -460,26 +447,32 @@ function UserHome() {
             });
             const data = await res.json();
             getUserList();
+            getAppointments();
         } catch (err) {
             setError('Network error');
             console.log(err);
         }
     }
 
-    async function cancelAppointment(appt: AppointmentObject) {
+    async function cancelAppointment(appt: AppointmentObject, userID: number | null) {
+        if (userID === null) {
+            console.log('Error: cancelAppointment called with null userID');
+            return;
+        }
+
         try {
             const res = await fetch('/api/appointments/cancel', {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userID: user.userID, apptID: appt.appt_id }),
+                body: JSON.stringify({ userID: userID, apptID: appt.appt_id }),
             });
             const data = await res.json();
             if (!res.ok) {
                 setError(data.message || 'Appointment Cancellation Failed');
                 return;
             }
-            //Snackbar popup to inform user that their account was successfully registered
+            //Snackbar popup to inform user that appointment was cancelled
             setSnackbar({
                 open: true,
                 message: 'Appointment Cancelled!',
@@ -651,7 +644,7 @@ function UserHome() {
                                                         {error}
                                                     </Alert>
                                                 )}
-                                                <SlotList user={user} appointments={bookedAppointmentList} onCancel={(appt) => cancelAppointment(appt)} listTitle='Upcoming Appointments' />
+                                                <SlotList user={user} appointments={bookedAppointmentList} onCancel={(appt) => cancelAppointment(appt, user.userID)} listTitle='Upcoming Appointments' />
                                             </Paper>
                                         </Grid>
                                     </Grid>
@@ -659,7 +652,7 @@ function UserHome() {
                             )}
                             {toggleButton == 1 && (
                                 <>
-                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)} />
+                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt, user.userID)} onBook={(appt) => bookAppointment(appt)} />
                                 </>
                             )}
                         </Box>
@@ -682,7 +675,7 @@ function UserHome() {
                                             <Paper elevation={3} sx={{ p: 2, background: '#c1c3c5ff' }}>
                                                 <Box sx={{ background: 'white' }}>
                                                     <CustomHeader text='Your Appointments' margin={6} variant='h4' link={false} />
-                                                    <SlotList user={user} appointments={appointmentList} onCancel={(appt) => cancelAppointment(appt)} listTitle='' variant='provider' />
+                                                    <SlotList user={user} appointments={appointmentList} onCancel={(appt) => cancelAppointment(appt, user.userID)} listTitle='' variant='provider' />
                                                 </Box>
                                             </Paper>
                                         </Grid>
@@ -840,7 +833,7 @@ function UserHome() {
                             )}
                             {toggleButton == 2 && (
                                 <>
-                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt)} onBook={(appt) => bookAppointment(appt)} />
+                                    <AppointmentTable appointments={appointmentList} user={user} onCancel={(appt) => cancelAppointment(appt, user.userID)} onBook={(appt) => bookAppointment(appt)} />
                                 </>
                             )}
                         </Box>
@@ -858,13 +851,13 @@ function UserHome() {
                                     elevation={3}
                                     sx={{
                                         padding: 3,
-                                        maxWidth: 700,
+                                        maxWidth: 1100,
                                         margin: 'auto',
                                         mt: 4,
                                         borderRadius: 3,
                                     }}
                                 >
-                                    <UserList users={userList} user={user} activateUser={(user) => ActivateUser(user)} deactivateUser={(user) => DeactivateUser(user)} />
+                                    <UserList users={userList} user={user} activateUser={(user) => ActivateUser(user)} deactivateUser={(user) => DeactivateUser(user)} cancelAppointment={(appt, userID) => cancelAppointment(appt, userID)} />
                                 </Paper>
                             )}
                             {toggleButton == 2 && (
